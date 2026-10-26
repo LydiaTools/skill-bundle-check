@@ -27,9 +27,11 @@ jobs:
       - name: Confirm the CLI rejects a broken bundle
         id: broken_bundle
         continue-on-error: true
-        run: node src/cli.js check ./examples/source ./examples/installed-missing
+        run: node src/cli.js check ./examples/source ./examples/installed-missing 2> "$RUNNER_TEMP/broken-bundle.log"
       - name: Assert the broken bundle failed
         if: always()
         env:
           RESULT: ${{ steps.broken_bundle.outcome }}
-        run: test "$RESULT" = failure
+        run: |
+          test "$RESULT" = failure
+          grep -q '^REFERENCE_MISSING_FROM_INSTALL' "$RUNNER_TEMP/broken-bundle.log"
