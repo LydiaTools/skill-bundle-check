@@ -1,6 +1,6 @@
 {
   "name": "skill-bundle-check",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Check whether an installed Agent Skill bundle still contains the files its instructions reference.",
   "type": "module",
   "engines": {

@@ -30,6 +30,17 @@ node src/cli.js check ./skills/my-skill ~/.agents/skills/my-skill
 
 The first path is the source skill folder containing `SKILL.md`. The second is the exact installed or packaged folder to verify. The command only reads files; it does not run install scripts or skill code.
 
+The repository includes both a preserved bundle and a deliberately broken installation. The failing fixture demonstrates the exact check:
+
+```text
+$ node src/cli.js check ./examples/source ./examples/installed-missing
+REFERENCE_MISSING_FROM_INSTALL  installed/SKILL.md:8  Referenced file is missing: references/setup.md
+LINK_MISSING  installed/SKILL.md:8  Referenced file is missing: references/setup.md
+
+FAIL  2 local references checked
+source: 2 Markdown files · installed: 1 Markdown files
+```
+
 ## GitHub Actions
 
 Run your normal packaging/install step first, then check its output:
@@ -39,7 +50,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.1.0
+  - uses: LydiaTools/skill-bundle-check@v0.1.1
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill
@@ -70,9 +81,11 @@ examples/
 ├── source/
 │   ├── SKILL.md
 │   └── references/setup.md
-└── installed/
-    ├── SKILL.md
-    └── references/setup.md
+├── installed/
+│   ├── SKILL.md
+│   └── references/setup.md
+└── installed-missing/
+    └── SKILL.md
 ```
 
 If `references/setup.md` is omitted from `installed/`, the check fails and reports the source line that still points to it.

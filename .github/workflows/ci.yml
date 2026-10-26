@@ -19,3 +19,20 @@ jobs:
         run: npm test
       - name: Run example
         run: node src/cli.js check ./examples/source ./examples/installed
+      - name: Exercise the composite action
+        uses: ./
+        with:
+          source: ./examples/source
+          installed: ./examples/installed
+      - name: Confirm the action rejects a broken bundle
+        id: broken_bundle
+        uses: ./
+        continue-on-error: true
+        with:
+          source: ./examples/source
+          installed: ./examples/installed-missing
+      - name: Assert the broken bundle failed
+        if: always()
+        env:
+          RESULT: ${{ steps.broken_bundle.outcome }}
+        run: test "$RESULT" = failure

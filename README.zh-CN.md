@@ -30,6 +30,17 @@ node src/cli.js check ./skills/my-skill ~/.agents/skills/my-skill
 
 第一个路径是包含 `SKILL.md` 的源目录；第二个路径是安装器或发行流程实际生成的目录。命令仅读取文件，不执行安装脚本或 Skill 代码。
 
+仓库同时提供完整安装样例和故意漏文件的安装样例：
+
+```text
+$ node src/cli.js check ./examples/source ./examples/installed-missing
+REFERENCE_MISSING_FROM_INSTALL  installed/SKILL.md:8  Referenced file is missing: references/setup.md
+LINK_MISSING  installed/SKILL.md:8  Referenced file is missing: references/setup.md
+
+FAIL  2 local references checked
+source: 2 Markdown files · installed: 1 Markdown files
+```
+
 ## GitHub Actions
 
 先运行你自己的打包或安装步骤，再检查产物：
@@ -39,7 +50,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.1.0
+  - uses: LydiaTools/skill-bundle-check@v0.1.1
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill
@@ -70,12 +81,14 @@ examples/
 ├── source/
 │   ├── SKILL.md
 │   └── references/setup.md
-└── installed/
-    ├── SKILL.md
-    └── references/setup.md
+├── installed/
+│   ├── SKILL.md
+│   └── references/setup.md
+└── installed-missing/
+    └── SKILL.md
 ```
 
-如果安装包漏掉 `references/setup.md`，检查会失败，并指出源文档中引用它的位置。
+`installed-missing/` 演示安装包漏掉 `references/setup.md` 时的真实失败输出。
 
 ## 开发
 
