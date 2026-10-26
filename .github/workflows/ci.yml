@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         node: [20, 22]
@@ -24,13 +24,10 @@ jobs:
         with:
           source: ./examples/source
           installed: ./examples/installed
-      - name: Confirm the action rejects a broken bundle
+      - name: Confirm the CLI rejects a broken bundle
         id: broken_bundle
-        uses: ./
         continue-on-error: true
-        with:
-          source: ./examples/source
-          installed: ./examples/installed-missing
+        run: node src/cli.js check ./examples/source ./examples/installed-missing
       - name: Assert the broken bundle failed
         if: always()
         env:

@@ -59,6 +59,7 @@ test('catches a reference that exists in source but was omitted by installation'
 			const result = await checkBundle(source, installed);
 			assert.equal(result.ok, false);
 			assert.ok(result.issues.some((item) => item.code === 'REFERENCE_MISSING_FROM_INSTALL' && item.target === 'references/setup guide.md'));
+			assert.equal(result.issues.length, 1);
 		},
 	);
 });

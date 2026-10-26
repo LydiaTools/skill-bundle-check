@@ -35,7 +35,6 @@ The repository includes both a preserved bundle and a deliberately broken instal
 ```text
 $ node src/cli.js check ./examples/source ./examples/installed-missing
 REFERENCE_MISSING_FROM_INSTALL  installed/SKILL.md:8  Referenced file is missing: references/setup.md
-LINK_MISSING  installed/SKILL.md:8  Referenced file is missing: references/setup.md
 
 FAIL  2 local references checked
 source: 2 Markdown files · installed: 1 Markdown files

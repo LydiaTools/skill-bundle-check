@@ -226,7 +226,7 @@ function issue(code, root, file, line, target, message) {
 function deduplicateIssues(issues) {
 	const seen = new Set();
 	return issues.filter((item) => {
-		const key = [item.code, item.root, item.file, item.line, item.target].join('\0');
+		const key = [item.root, item.file, item.line, item.target].join('\0');
 		if (seen.has(key)) return false;
 		seen.add(key);
 		return true;
