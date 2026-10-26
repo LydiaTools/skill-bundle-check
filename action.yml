@@ -1,0 +1,17 @@
+name: Skill Bundle Check
+description: Check that a distributed Agent Skill keeps the local files its Markdown references.
+inputs:
+  source:
+    description: Path to the source skill folder, relative to the workspace.
+    required: true
+  installed:
+    description: Path to the exact installed or built bundle to verify, relative to the workspace.
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        INPUT_SOURCE: ${{ inputs.source }}
+        INPUT_INSTALLED: ${{ inputs.installed }}
+      run: node "$GITHUB_ACTION_PATH/src/action.js"
