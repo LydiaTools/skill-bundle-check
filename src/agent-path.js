@@ -5,6 +5,18 @@ import path from 'node:path';
 const antigravityDocs = 'https://www.antigravity.google/docs/skills';
 
 const profiles = {
+	'claude-code': {
+		label: 'Claude Code',
+		projectParts: ['.claude', 'skills'],
+		globalParts: ['.claude', 'skills'],
+		documents: ['https://code.claude.com/docs/en/skills'],
+	},
+	'codex-cli': {
+		label: 'Codex CLI',
+		projectParts: ['.agents', 'skills'],
+		globalParts: ['.agents', 'skills'],
+		documents: ['https://developers.openai.com/codex/skills/'],
+	},
 	'antigravity-cli': {
 		label: 'Antigravity CLI (agy)',
 		projectParts: ['.agents', 'skills'],

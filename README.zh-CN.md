@@ -41,8 +41,17 @@ node src/cli.js check ./skills/my-skill ~/.agents/skills/my-skill
 检查 Agent 的全局安装目录里是否有某个 Skill：
 
 ```bash
+node src/cli.js check-agent --agent claude-code --skill my-skill --scope global
+node src/cli.js check-agent --agent codex-cli --skill my-skill --scope global
 node src/cli.js check-agent --agent antigravity-cli --skill my-skill --scope global
 node src/cli.js check-agent --agent antigravity-ide --skill my-skill --scope global
+```
+
+检查仓库里的项目级 Skill 时，把 `--scope` 设为 `project`：
+
+```bash
+node src/cli.js check-agent --agent claude-code --skill my-skill --scope project
+node src/cli.js check-agent --agent codex-cli --skill my-skill --scope project
 ```
 
 检查其他 Agent 时，直接传入它文档中的 Skills 根目录：
@@ -51,7 +60,7 @@ node src/cli.js check-agent --agent antigravity-ide --skill my-skill --scope glo
 node src/cli.js check-agent --root ./custom-agent/skills --skill my-skill --scope global
 ```
 
-目前内置了 `antigravity-cli`、`antigravity-ide` 和 `antigravity-app` 三种路径。目标目录缺少 Skill 时返回退出码 1；如果 Skill 只在 `~/.agents/skills`，报告会同时显示预期路径与实际找到的路径。Antigravity IDE 文档支持的旧路径也会识别。检查文件落点不等于确认 Agent 已在运行时加载或执行 Skill。
+目前内置了 `claude-code`、`codex-cli`、`antigravity-cli`、`antigravity-ide` 和 `antigravity-app` 路径，映射依据分别链接到 [Claude Code Skills 文档](https://code.claude.com/docs/en/skills)、[Codex Skills 文档](https://developers.openai.com/codex/skills/) 和 [Antigravity Skills 文档](https://www.antigravity.google/docs/skills)。项目级检查以当前工作目录代表的项目目录为准。目标目录缺少 Skill 时返回退出码 1；如果 Skill 只在 `~/.agents/skills`，报告会同时显示预期路径与实际找到的路径。Antigravity IDE 文档支持的旧路径也会识别。检查文件落点不等于确认 Agent 已在运行时加载或执行 Skill。
 
 使用仓库内的合成样例复现安装目录不匹配：
 
@@ -80,7 +89,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.1.1
+  - uses: LydiaTools/skill-bundle-check@v0.3.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill

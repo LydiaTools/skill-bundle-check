@@ -41,8 +41,17 @@ The first path is the source skill folder containing `SKILL.md`. The second is t
 Check whether an agent has a Skill at its documented global path:
 
 ```bash
+node src/cli.js check-agent --agent claude-code --skill my-skill --scope global
+node src/cli.js check-agent --agent codex-cli --skill my-skill --scope global
 node src/cli.js check-agent --agent antigravity-cli --skill my-skill --scope global
 node src/cli.js check-agent --agent antigravity-ide --skill my-skill --scope global
+```
+
+For a repository-local Skill, use `--scope project`:
+
+```bash
+node src/cli.js check-agent --agent claude-code --skill my-skill --scope project
+node src/cli.js check-agent --agent codex-cli --skill my-skill --scope project
 ```
 
 For another agent, pass its documented Skills root directly:
@@ -51,7 +60,7 @@ For another agent, pass its documented Skills root directly:
 node src/cli.js check-agent --root ./custom-agent/skills --skill my-skill --scope global
 ```
 
-The current built-in profiles are `antigravity-cli`, `antigravity-ide`, and `antigravity-app`. A missing Skill returns exit code 1. If the Skill is found in `~/.agents/skills` but not in the selected global root, the report shows both paths. A documented legacy Antigravity IDE path is also recognized. This checks file placement; it does not confirm runtime discovery or execution.
+Built-in profiles cover `claude-code`, `codex-cli`, `antigravity-cli`, `antigravity-ide`, and `antigravity-app`. Profile paths link to the platform documentation used for the mapping: [Claude Code Skills](https://code.claude.com/docs/en/skills), [Codex Skills](https://developers.openai.com/codex/skills/), and [Antigravity Skills](https://www.antigravity.google/docs/skills). Project scope checks the project directory represented by the current working directory. A missing Skill returns exit code 1. If the Skill is found in `~/.agents/skills` but not in the selected global root, the report shows both paths. A documented legacy Antigravity IDE path is also recognized. This checks file placement; it does not confirm runtime discovery or execution.
 
 Reproduce an install-path mismatch with the included synthetic fixture:
 
@@ -80,7 +89,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.1.1
+  - uses: LydiaTools/skill-bundle-check@v0.3.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill
