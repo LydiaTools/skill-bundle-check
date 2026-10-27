@@ -8,7 +8,14 @@ Skill Bundle Check 对比 Skill 源目录与安装器或发行流程生成的实
 
 ## 为什么做这个工具
 
-社区里有人遇到过这样的情况：仓库里的 `SKILL.md` 看起来正常，安装后却丢了 `references/`、`scripts/` 或图片；相对链接仍指向仓库外部；转换到另一个 Agent 后链接基准目录变了。可查看 [Agent-Reach](https://github.com/Panniantong/Agent-Reach/issues/622)、[Hallmark](https://github.com/Nutlope/hallmark/issues/76)、[Tastemaker](https://github.com/codeswithroh/tastemaker/issues/86) 和 [Microsoft APM](https://github.com/microsoft/apm/issues/2966) 的问题记录。
+社区里已经出现多种 Skill 安装后引用失效的问题：
+
+- [Agent-Reach](https://github.com/Panniantong/Agent-Reach/issues/622)、[Hallmark](https://github.com/Nutlope/hallmark/issues/76)、[Tastemaker](https://github.com/codeswithroh/tastemaker/issues/86) 和 [Microsoft APM](https://github.com/microsoft/apm/issues/2966) 都报告过安装包漏掉 Skill 引用的文件。
+- [Addy Osmani 的 agent-skills #468](https://github.com/addyosmani/agent-skills/issues/468) 报告：即使完整安装插件，共享文件也可能因路径相对目录不对而无法读取；[#597](https://github.com/addyosmani/agent-skills/issues/597) 记录了只安装单个 Skill 时缺少共享文件的问题。
+- [OpenAI Codex #8364](https://github.com/openai/codex/issues/8364) 记录了安装后的 Skill 找不到它引用的脚本；维护者将其关联到另一个正在修复的问题。
+- [CLI-Anything #331](https://github.com/HKUDS/CLI-Anything/issues/331) 报告安装器只复制 Skill 目录，没有复制它引用的方法文档。
+
+格式校验本身未必能发现这类问题。[一份复现记录](https://tinkerhood.com/learn/skill-references-and-assets/) 显示，格式校验通过时，Skill 引用的文件仍可能缺失。本工具直接检查源目录和实际安装目录。
 
 结构检查与安全扫描仍然有用。这个工具只补一个检查环节：对比你准备发布的源 Skill 和用户实际安装到的目录。
 
