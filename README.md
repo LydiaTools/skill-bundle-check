@@ -2,9 +2,9 @@
 
 **Your skill works in the repo. Does it still work after installation?**
 
-Skill Bundle Check compares a source Agent Skill with the exact folder produced by your installer or release build. It checks that Markdown references still resolve inside the installed bundle and that referenced files were not left behind.
+Skill Bundle Check has two read-only checks. `check` compares a source Agent Skill with the exact folder produced by your installer or release build, including its local references. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root.
 
-This focuses on the handoff between source and installed files. It does not run the skill or judge what an agent does with it.
+It does not run the skill, start the agent, or claim that the agent loaded it at runtime.
 
 ## Why this exists
 
@@ -14,6 +14,7 @@ People have reported Agent Skills whose `SKILL.md` points to files that are miss
 - [Addy Osmani's agent-skills #468](https://github.com/addyosmani/agent-skills/issues/468) reports shared references that remain unreachable even in a full plugin install because the links resolve from each skill directory. [#597](https://github.com/addyosmani/agent-skills/issues/597) documents the related single-skill install case.
 - [OpenAI Codex #8364](https://github.com/openai/codex/issues/8364) records a referenced script missing from the installed skill; the maintainer linked it to a separate fix in progress.
 - [CLI-Anything #331](https://github.com/HKUDS/CLI-Anything/issues/331) reports an installer that copies the skill but leaves its referenced methodology files behind.
+- [Vercel Skills #1851](https://github.com/vercel-labs/skills/issues/1851) reports a successful global install that places a Skill in a shared directory instead of Antigravity CLI's documented global directory.
 
 Format validation alone may not catch these failures. A [reproduction report](https://tinkerhood.com/learn/skill-references-and-assets/) shows a skill-reference check passing while the referenced file is missing. This tool checks the actual source and installed folders instead.
 
@@ -36,6 +37,29 @@ node src/cli.js check ./skills/my-skill ~/.agents/skills/my-skill
 ```
 
 The first path is the source skill folder containing `SKILL.md`. The second is the exact installed or packaged folder to verify. The command only reads files; it does not run install scripts or skill code.
+
+Check whether an agent has a Skill at its documented global path:
+
+```bash
+node src/cli.js check-agent --agent antigravity-cli --skill my-skill --scope global
+node src/cli.js check-agent --agent antigravity-ide --skill my-skill --scope global
+```
+
+For another agent, pass its documented Skills root directly:
+
+```bash
+node src/cli.js check-agent --root ./custom-agent/skills --skill my-skill --scope global
+```
+
+The current built-in profiles are `antigravity-cli`, `antigravity-ide`, and `antigravity-app`. A missing Skill returns exit code 1. If the Skill is found in `~/.agents/skills` but not in the selected global root, the report shows both paths. A documented legacy Antigravity IDE path is also recognized. This checks file placement; it does not confirm runtime discovery or execution.
+
+Reproduce an install-path mismatch with the included synthetic fixture:
+
+```bash
+node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope global --home ./examples/agent-paths
+```
+
+The command intentionally exits with code 1 and reports that `probe-skill` exists under the shared `.agents/skills` root, not Antigravity CLI's documented global root. No agent is launched.
 
 The repository includes both a preserved bundle and a deliberately broken installation. The failing fixture demonstrates the exact check:
 
@@ -77,6 +101,8 @@ node src/cli.js check ./skills/my-skill ./dist/my-skill --format json
 - Absolute paths, missing files, broken symlinks, and links that escape the bundle root are reported with file and line.
 
 It reads Markdown links, reference-style link definitions, HTML `href`/`src`, and conventional `assets/`, `references/`, or `scripts/` paths written in inline code. It does not parse every Markdown extension or execute examples.
+
+`check-agent` checks for the selected Skill's `SKILL.md` at the chosen documented root. Built-in paths link to the platform documentation used for that mapping; custom roots are checked exactly as supplied.
 
 ## Examples
 
