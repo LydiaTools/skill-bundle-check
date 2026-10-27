@@ -2,9 +2,9 @@
 
 **仓库里能用，装进 Agent 之后还好吗？**
 
-Skill Bundle Check 对比 Skill 源目录与安装器或发行流程生成的实际目录，检查 Markdown 引用的文件是否仍在包内、路径是否有效。
+Skill Bundle Check 提供两种只读检查。`check` 对比 Skill 源目录和安装器或发行流程生成的实际目录，检查引用文件是否完整；`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。
 
-它检查源文件到安装文件的交接，不会运行 Skill，也不会判断 Agent 实际执行效果。
+它不会运行 Skill、启动 Agent，也不会声称 Agent 已在运行时加载了 Skill。
 
 ## 为什么做这个工具
 
@@ -14,6 +14,7 @@ Skill Bundle Check 对比 Skill 源目录与安装器或发行流程生成的实
 - [Addy Osmani 的 agent-skills #468](https://github.com/addyosmani/agent-skills/issues/468) 报告：即使完整安装插件，共享文件也可能因路径相对目录不对而无法读取；[#597](https://github.com/addyosmani/agent-skills/issues/597) 记录了只安装单个 Skill 时缺少共享文件的问题。
 - [OpenAI Codex #8364](https://github.com/openai/codex/issues/8364) 记录了安装后的 Skill 找不到它引用的脚本；维护者将其关联到另一个正在修复的问题。
 - [CLI-Anything #331](https://github.com/HKUDS/CLI-Anything/issues/331) 报告安装器只复制 Skill 目录，没有复制它引用的方法文档。
+- [Vercel Skills #1851](https://github.com/vercel-labs/skills/issues/1851) 报告全局安装显示成功，但 Skill 被写入共享目录，没有进入 Antigravity CLI 文档所列的全局目录。
 
 格式校验本身未必能发现这类问题。[一份复现记录](https://tinkerhood.com/learn/skill-references-and-assets/) 显示，格式校验通过时，Skill 引用的文件仍可能缺失。本工具直接检查源目录和实际安装目录。
 
@@ -36,6 +37,29 @@ node src/cli.js check ./skills/my-skill ~/.agents/skills/my-skill
 ```
 
 第一个路径是包含 `SKILL.md` 的源目录；第二个路径是安装器或发行流程实际生成的目录。命令仅读取文件，不执行安装脚本或 Skill 代码。
+
+检查 Agent 的全局安装目录里是否有某个 Skill：
+
+```bash
+node src/cli.js check-agent --agent antigravity-cli --skill my-skill --scope global
+node src/cli.js check-agent --agent antigravity-ide --skill my-skill --scope global
+```
+
+检查其他 Agent 时，直接传入它文档中的 Skills 根目录：
+
+```bash
+node src/cli.js check-agent --root ./custom-agent/skills --skill my-skill --scope global
+```
+
+目前内置了 `antigravity-cli`、`antigravity-ide` 和 `antigravity-app` 三种路径。目标目录缺少 Skill 时返回退出码 1；如果 Skill 只在 `~/.agents/skills`，报告会同时显示预期路径与实际找到的路径。Antigravity IDE 文档支持的旧路径也会识别。检查文件落点不等于确认 Agent 已在运行时加载或执行 Skill。
+
+使用仓库内的合成样例复现安装目录不匹配：
+
+```bash
+node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope global --home ./examples/agent-paths
+```
+
+此命令会按预期以退出码 1 结束，并报告 `probe-skill` 只在共享 `.agents/skills` 目录，没有出现在 Antigravity CLI 文档中的全局目录。不会启动 Agent。
 
 仓库同时提供完整安装样例和故意漏文件的安装样例：
 
@@ -77,6 +101,8 @@ node src/cli.js check ./skills/my-skill ./dist/my-skill --format json
 - 报告绝对路径、缺失文件、失效符号链接和越出包目录的链接，并标出文件与行号。
 
 支持 Markdown 行内链接、引用式链接定义、HTML `href`/`src`，以及行内代码中常见的 `assets/`、`references/`、`scripts/` 路径。它不会解析所有 Markdown 扩展，也不会执行示例代码。
+
+`check-agent` 检查选定 Skill 的 `SKILL.md` 是否在所选 Agent 的文档路径中。内置路径会附带对应平台文档；自定义根目录按传入路径原样检查。
 
 ## 示例
 
