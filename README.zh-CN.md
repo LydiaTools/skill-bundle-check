@@ -30,6 +30,8 @@ cd skill-bundle-check
 node src/cli.js check ./examples/source ./examples/installed
 ```
 
+体验多 Agent 更新前后检查：运行 `node examples/update-demo.js`。它只使用临时目录里的虚构文件。
+
 再运行故意漏文件的安装样例，看看工具如何提示。该命令按预期返回退出码 `1`：
 
 ```bash
@@ -87,6 +89,16 @@ node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope 
 
 此命令会按预期以退出码 1 结束，并报告 `probe-skill` 只在共享 `.agents/skills` 目录，没有出现在 Antigravity CLI 文档中的全局目录。不会启动 Agent。
 
+## 试一次虚构的更新
+
+无需安装 Agent Skill，即可体验更新前后检查：
+
+```bash
+node examples/update-demo.js
+```
+
+示例在新建临时目录中创建两份虚构 Skill，移除其中一份来模拟更新，再调用真实命令。它输出 `claude: found -> found` 和 `codex: found -> missing`；比较命令返回退出码 1；示例正常完成时自身返回 0。运行结束后会清理该临时目录，不会改动你已安装的 Skill。
+
 ## 更新前后检查多个 Agent 的 Skill
 
 同一个 Skill 在更新后可能仍在一个 Agent 的目录，却从另一个目录消失。[Spec Kit #5002](https://github.com/github/spec-kit/issues/5002) 报告了一种 Claude/Codex 配置，已有[修复提案](https://github.com/github/spec-kit/pull/5005)。下面只检查文件，不证明 Agent 已加载 Skill。
@@ -115,7 +127,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.5.0
+  - uses: LydiaTools/skill-bundle-check@v0.5.1
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill

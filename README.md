@@ -30,6 +30,8 @@ cd skill-bundle-check
 node src/cli.js check ./examples/source ./examples/installed
 ```
 
+To see the multi-agent update comparison, run `node examples/update-demo.js`. It uses fictional files in a temporary directory.
+
 The included broken installation shows what a missing reference looks like. Run this command; exit code `1` is expected:
 
 ```bash
@@ -87,6 +89,16 @@ node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope 
 
 The command intentionally exits with code 1 and reports that `probe-skill` exists under the shared `.agents/skills` root, not Antigravity CLI's documented global root. No agent is launched.
 
+## Try a fictional update
+
+See the before/after check without installing an Agent Skill:
+
+```bash
+node examples/update-demo.js
+```
+
+The demo creates two fictional Skill folders in a new temporary directory, removes one to simulate an update, and runs the real CLI. It prints `claude: found -> found` and `codex: found -> missing`; the comparison returns exit 1, while the successfully completed demo itself returns exit 0. The demo then removes its temporary directory. It does not touch your installed Skills.
+
 ## Compare installations before and after an update
 
 An update can leave a Skill present for one agent and missing for another. The open [Spec Kit report #5002](https://github.com/github/spec-kit/issues/5002) describes this in one Claude/Codex configuration; [a proposed fix](https://github.com/github/spec-kit/pull/5005) is under review. The check below observes files, not whether an agent actually loads them.
@@ -115,7 +127,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.5.0
+  - uses: LydiaTools/skill-bundle-check@v0.5.1
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill
