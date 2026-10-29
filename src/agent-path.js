@@ -1,6 +1,7 @@
 import { stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { inspectPath } from './presence.js';
 
 const antigravityDocs = 'https://www.antigravity.google/docs/skills';
 
@@ -68,6 +69,7 @@ export async function checkAgentPath({ agent, skill, scope, root, home, codexHom
 	const skillPath = path.join(base, skill);
 	const entryPath = path.join(skillPath, 'SKILL.md');
 	const expectedPresent = await isFile(entryPath);
+	const pathDiagnostic = expectedPresent ? null : await inspectPath(entryPath);
 	const otherLocations = [];
 	if (agent === 'codex-cli' && scope === 'global') {
 		// An explicit home isolates test fixtures from the caller's CODEX_HOME.
@@ -106,6 +108,7 @@ export async function checkAgentPath({ agent, skill, scope, root, home, codexHom
 		expectedRoot: base,
 		expectedEntry: entryPath,
 		expectedPresent,
+		...(pathDiagnostic?.status === 'broken-link' ? { brokenLink: pathDiagnostic.at } : {}),
 		status,
 		otherLocations,
 		documents: profile?.documents || [],

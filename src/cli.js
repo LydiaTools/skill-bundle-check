@@ -2,6 +2,7 @@
 import path from 'node:path';
 import { readFile, stat } from 'node:fs/promises';
 import { snapshot, compare } from './presence.js';
+import { diffContent } from './content-diff.js';
 import { inspectMarkdown } from './review-pipes.js';
 import { checkAgentPath, getAgentProfiles } from './agent-path.js';
 import { checkBundle } from './check.js';
@@ -13,6 +14,7 @@ Usage:
   skill-bundle-check check-agent --skill <name> --scope global|project (--agent <id> | --root <path>) [options]
   skill-bundle-check snapshot <skill> <label=skills-root> [label=skills-root ...]
   skill-bundle-check compare <before.json> <after.json>
+  skill-bundle-check diff <source-skill-dir> <installed-skill-dir> [--format text|json]
   skill-bundle-check review-pipes <markdown-file> [--format text|json]
 
 Example:
@@ -24,6 +26,7 @@ check reads both bundle directories. check-agent looks for SKILL.md at the docum
 All checks are read-only; none runs nor installs a skill.
 review-pipes offers non-blocking review hints for escaped pipes in inline code within ordinary Markdown tables.
 Snapshot and compare output JSON with paths; exit 0 if all targets are found, 1 for a missing/broken target, 2 for unavailable input.
+diff exits 0 for matching files, 1 for differences, and 2 when comparison cannot complete.
 For Codex global checks, --codex-home overrides CODEX_HOME; --home isolates the default home.
 
 Supported agent profiles:
@@ -39,6 +42,16 @@ async function main(argv) {
 	if (command === 'check-agent') return await runAgentCheck(args);
 	if (command === 'snapshot') return await runPresenceSnapshot(args);
 	if (command === 'compare') return await runPresenceCompare(args);
+	if (command === 'diff') {
+		if (![2,4].includes(args.length) || (args.length === 4 && (args[2] !== '--format' || !['text','json'].includes(args[3])))) throw new Error('Use diff <source-skill-dir> <installed-skill-dir> [--format text|json]');
+		const result = await diffContent(args[0], args[1]);
+		if (args[3] === 'json') console.log(JSON.stringify(result, null, 2));
+		else {
+			for (const item of result.changes) console.log(`${item.status.toUpperCase()}  ${JSON.stringify(item.path)}`);
+			console.log(`${result.changes.length} file(s) differ; source ${result.files_source}, installed ${result.files_installed}.`);
+		}
+		return result.changes.length ? 1 : 0;
+	}
 	if (command === 'review-pipes') return await runPipeReview(args);
 	console.error(HELP);
 	return 2;
@@ -176,6 +189,7 @@ function printAgentResult(result) {
 		console.log('FOUND  SKILL.md exists at the documented path.');
 	} else {
 		console.log('NOT FOUND  SKILL.md is missing from the expected root shown above.');
+		if (result.brokenLink) console.log(`BROKEN LINK  ${result.brokenLink} points to a missing target.`);
 	}
 	for (const location of result.otherLocations) {
 		const label = location.kind === 'documented-legacy' ? 'FOUND LEGACY' : location.kind === 'codex-home' ? 'FOUND CODEX HOME' : 'FOUND OTHER ROOT';
