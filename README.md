@@ -22,6 +22,8 @@ Existing structure and security checks are useful before publishing. This tool a
 
 ## Quick start
 
+[Try the table-escape review in your browser](https://lydiatools.github.io/skill-bundle-check/web/) without installing Node.
+
 Use Node.js 20 or later. Cloning the repository requires network access; once the files are on your machine, the checks need no dependencies, account, or network access.
 
 ```bash
@@ -101,6 +103,12 @@ The demo creates two fictional Skill folders in a new temporary directory, remov
 
 ## Review a command hidden inside a table
 
+[Try table escape review online](https://lydiatools.github.io/skill-bundle-check/web/) · [中文](https://lydiatools.github.io/skill-bundle-check/web/?lang=zh)
+
+![Actual online table review with fictional Markdown and two review hints](docs/assets/pipe-review-web.png)
+
+The page checks pasted or selected Markdown in your browser, without executing it. The web page only covers this table-escape review; installation and bundle checks remain in the CLI.
+
 A table can show a pipe while the raw Skill file contains a backslash before it. Is the backslash part of the intended command? That depends on the shell and regex syntax. [GitHub documents table escaping](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-tables); [leanrea #1](https://github.com/aicodeking/leanrea/issues/1) reports one real case where copied commands behaved differently.
 
 ```bash
@@ -138,7 +146,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.6.0
+  - uses: LydiaTools/skill-bundle-check@v0.7.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill

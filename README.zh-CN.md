@@ -22,6 +22,8 @@ Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地�
 
 ## 快速开始
 
+[在线试用表格转义检查](https://lydiatools.github.io/skill-bundle-check/web/?lang=zh)，无需安装 Node。
+
 需要 Node.js 20 或更高版本。克隆仓库需要联网；文件下载到本机后，运行检查无需额外依赖、账号或网络。
 
 ```bash
@@ -101,6 +103,12 @@ node examples/update-demo.js
 
 ## 检查表格里的命令
 
+[在线试用表格转义检查](https://lydiatools.github.io/skill-bundle-check/web/?lang=zh) · [English](https://lydiatools.github.io/skill-bundle-check/web/)
+
+![在线检查页面的虚构 Markdown 和两条待复核提示](docs/assets/pipe-review-web.png)
+
+网页在当前浏览器中检查粘贴或选取的 Markdown，不执行命令。网页只提供表格转义复核；安装目录和文件引用检查仍需使用命令行。
+
 表格显示的是竖线，Skill 原文中可能带有反斜杠。反斜杠是否正确，取决于命令和正则语法。[GitHub 的表格说明](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-tables)介绍了转义；[leanrea #1](https://github.com/aicodeking/leanrea/issues/1)报告了复制后表现不同的实例。
 
 ```bash
@@ -138,7 +146,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.6.0
+  - uses: LydiaTools/skill-bundle-check@v0.7.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill
