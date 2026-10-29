@@ -2,7 +2,7 @@
 
 **Your skill works in the repo. Does it still work after installation?**
 
-Skill Bundle Check has two read-only checks. `check` compares a source Agent Skill with the exact folder produced by your installer or release build, including its local references. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root.
+Skill Bundle Check has two read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root.
 
 It does not run the skill, start the agent, or claim that the agent loaded it at runtime.
 
@@ -22,7 +22,7 @@ Existing structure and security checks are useful before publishing. This tool a
 
 ## Quick start
 
-Use Node.js 20 or later. No dependencies, account, or network access are needed.
+Use Node.js 20 or later. Cloning the repository requires network access; once the files are on your machine, the checks need no dependencies, account, or network access.
 
 ```bash
 git clone https://github.com/LydiaTools/skill-bundle-check.git
