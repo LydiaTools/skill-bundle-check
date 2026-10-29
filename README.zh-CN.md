@@ -30,6 +30,19 @@ cd skill-bundle-check
 node src/cli.js check ./examples/source ./examples/installed
 ```
 
+再运行故意漏文件的安装样例，看看工具如何提示。该命令按预期返回退出码 `1`：
+
+```bash
+node src/cli.js check ./examples/source ./examples/installed-missing
+```
+
+```text
+REFERENCE_MISSING_FROM_INSTALL  installed/SKILL.md:8  Referenced file is missing: references/setup.md
+
+FAIL  2 local references checked
+source: 2 Markdown files · installed: 1 Markdown files
+```
+
 检查真实安装目录或构建产物：
 
 ```bash
@@ -73,16 +86,6 @@ node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope 
 ```
 
 此命令会按预期以退出码 1 结束，并报告 `probe-skill` 只在共享 `.agents/skills` 目录，没有出现在 Antigravity CLI 文档中的全局目录。不会启动 Agent。
-
-仓库同时提供完整安装样例和故意漏文件的安装样例：
-
-```text
-$ node src/cli.js check ./examples/source ./examples/installed-missing
-REFERENCE_MISSING_FROM_INSTALL  installed/SKILL.md:8  Referenced file is missing: references/setup.md
-
-FAIL  2 local references checked
-source: 2 Markdown files · installed: 1 Markdown files
-```
 
 ## GitHub Actions
 

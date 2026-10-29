@@ -30,6 +30,19 @@ cd skill-bundle-check
 node src/cli.js check ./examples/source ./examples/installed
 ```
 
+The included broken installation shows what a missing reference looks like. Run this command; exit code `1` is expected:
+
+```bash
+node src/cli.js check ./examples/source ./examples/installed-missing
+```
+
+```text
+REFERENCE_MISSING_FROM_INSTALL  installed/SKILL.md:8  Referenced file is missing: references/setup.md
+
+FAIL  2 local references checked
+source: 2 Markdown files · installed: 1 Markdown files
+```
+
 Run it against a real installation or build output:
 
 ```bash
@@ -73,16 +86,6 @@ node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope 
 ```
 
 The command intentionally exits with code 1 and reports that `probe-skill` exists under the shared `.agents/skills` root, not Antigravity CLI's documented global root. No agent is launched.
-
-The repository includes both a preserved bundle and a deliberately broken installation. The failing fixture demonstrates the exact check:
-
-```text
-$ node src/cli.js check ./examples/source ./examples/installed-missing
-REFERENCE_MISSING_FROM_INSTALL  installed/SKILL.md:8  Referenced file is missing: references/setup.md
-
-FAIL  2 local references checked
-source: 2 Markdown files · installed: 1 Markdown files
-```
 
 ## GitHub Actions
 
