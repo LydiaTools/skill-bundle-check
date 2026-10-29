@@ -2,7 +2,7 @@
 
 **仓库里能用，装进 Agent 之后还好吗？**
 
-Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`review-pipes` 提示人工检查部分 Markdown 表格转义。
+Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个指定目录的文件内容。`review-pipes` 提示人工检查部分 Markdown 表格转义。
 
 它不会运行 Skill、启动 Agent，也不会声称 Agent 已在运行时加载了 Skill。
 
@@ -32,7 +32,7 @@ cd skill-bundle-check
 node src/cli.js check ./examples/source ./examples/installed
 ```
 
-体验多 Agent 更新前后检查：运行 `node examples/update-demo.js`。它只使用临时目录里的虚构文件。
+体验多 Agent 更新前后检查：运行 `node examples/update-demo.js`。体验安装副本内容不同：运行 `node examples/diff-demo.js`。它只使用临时目录里的虚构文件。
 
 再运行故意漏文件的安装样例，看看工具如何提示。该命令按预期返回退出码 `1`：
 
@@ -80,6 +80,8 @@ node src/cli.js check-agent --root ./custom-agent/skills --skill my-skill --scop
 ```
 
 目前内置了 `claude-code`、`codex-cli`、`antigravity-cli`、`antigravity-ide` 和 `antigravity-app` 路径，映射依据分别链接到 [Claude Code Skills 文档](https://code.claude.com/docs/en/skills)、[Codex Skills 文档](https://developers.openai.com/codex/skills/) 和 [Antigravity Skills 文档](https://www.antigravity.google/docs/skills)。项目级检查以当前工作目录代表的项目目录为准。目标目录缺少 Skill 时返回退出码 1；如果 Skill 只在 `~/.agents/skills`，报告会同时显示预期路径与实际找到的路径。Antigravity IDE 文档支持的旧路径也会识别。检查文件落点不等于确认 Agent 已在运行时加载或执行 Skill。
+
+如果预期路径中有失效的符号链接，`check-agent` 也会指出它的位置。[一个 Codex 问题](https://github.com/openai/codex/issues/11314)最终确认是相对链接指向错误；本检查只诊断路径，不证明 Agent 已加载。
 
 从 v0.4.0 起，Codex 全局检查同时查看 `~/.agents/skills` 和 `$CODEX_HOME/skills`（默认 `~/.codex/skills`），并列出找到的目录。可设置进程的 `CODEX_HOME`，也可用 `--codex-home /路径/到/codex-home` 指定；使用 `--home` 检查隔离样例时，默认 Codex 目录是该 home 下的 `.codex`。隔离环境中的原生 Codex app-server `skills/list` 测试在两个用户目录各发现了一个合成 Skill。文件存在仍不证明你正在使用的 Agent 已加载该 Skill；不同版本或配置可能不同。
 
@@ -146,7 +148,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.7.0
+  - uses: LydiaTools/skill-bundle-check@v0.8.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill
@@ -193,6 +195,18 @@ examples/
 ```bash
 npm test
 ```
+
+## 对比源目录和已安装副本
+
+```bash
+node src/cli.js diff ./skills/my-skill ~/.agents/skills/my-skill
+```
+
+在隔离测试中，用 `skills@1.7.4` 以复制模式安装本地 Skill v1，再把源文件改为 v2 后，安装副本仍是 v1。安装器提示本地来源无法自动检查并建议重新添加；`diff` 列出内容不同的 `SKILL.md`。这是一个具体测试，其他版本和安装模式可能不同。[原始问题](https://github.com/vercel-labs/skills/issues/1440)。
+
+明确选择两个各自包含普通文件 `SKILL.md` 的独立目录后，工具只读对比普通文件的字节，输出有差异的相对路径和状态，加 `--format json` 可获取 SHA-256，不输出正文，也不修改文件。退出码 0 表示已比对的文件一致，1 表示有差异，2 表示检查未完成。空目录差异不计入；比较不能判断哪个版本正确、Agent 是否实际加载或执行。
+
+目录内部的符号链接与特殊文件不支持；超过 2,000 个条目、单文件 8 MiB 或每目录总计 64 MiB 时停止，不把部分结果当完整结果。运行期间请不要修改两个目录；这不是抵抗并发恶意替换的原子安全机制。
 
 ## 许可
 

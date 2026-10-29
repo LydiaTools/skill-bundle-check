@@ -2,7 +2,7 @@
 
 **Your skill works in the repo. Does it still work after installation?**
 
-Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `review-pipes` points out certain Markdown table escapes for human review.
+Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares file bytes between two explicitly selected skill folders. `review-pipes` points out certain Markdown table escapes for human review.
 
 It does not run the skill, start the agent, or claim that the agent loaded it at runtime.
 
@@ -32,7 +32,7 @@ cd skill-bundle-check
 node src/cli.js check ./examples/source ./examples/installed
 ```
 
-To see the multi-agent update comparison, run `node examples/update-demo.js`. It uses fictional files in a temporary directory.
+To see the multi-agent update comparison, run `node examples/update-demo.js`. To try a changed installed copy, run `node examples/diff-demo.js`. It uses fictional files in a temporary directory.
 
 The included broken installation shows what a missing reference looks like. Run this command; exit code `1` is expected:
 
@@ -80,6 +80,8 @@ node src/cli.js check-agent --root ./custom-agent/skills --skill my-skill --scop
 ```
 
 Built-in profiles cover `claude-code`, `codex-cli`, `antigravity-cli`, `antigravity-ide`, and `antigravity-app`. Profile paths link to the platform documentation used for the mapping: [Claude Code Skills](https://code.claude.com/docs/en/skills), [Codex Skills](https://developers.openai.com/codex/skills/), and [Antigravity Skills](https://www.antigravity.google/docs/skills). Project scope checks the project directory represented by the current working directory. A missing Skill returns exit code 1. If the Skill is found in `~/.agents/skills` but not in the selected global root, the report shows both paths. A documented legacy Antigravity IDE path is also recognized. This checks file placement; it does not confirm runtime discovery or execution.
+
+If an expected path contains a broken symbolic link, `check-agent` also shows the broken link. A [Codex report](https://github.com/openai/codex/issues/11314) was traced to a relative link pointing at the wrong location; this check diagnoses file paths, not agent loading.
 
 From v0.4.0, Codex global checks look in both `~/.agents/skills` and `$CODEX_HOME/skills` (default `~/.codex/skills`) and report every matching root. Set `CODEX_HOME` for the process, or use `--codex-home /path/to/codex-home`; when using `--home` for a fixture, the default Codex home is `.codex` under that home. An isolated native Codex app-server `skills/list` test found separate synthetic Skills in both user roots. File presence alone still does not prove that your running agent loaded a particular Skill; versions and configuration may differ.
 
@@ -137,6 +139,20 @@ JSON reports `found`, `missing`, `broken-link`, `not-file`, or `unavailable`. Sn
 
 Root paths in the JSON are absolute and may contain personal information; review them before sharing. Two names may point to the same physical directory; they are not proof of independent copies. The tool reads presence at the time of each check and does not back up, restore, prevent deletion, compare contents or establish agent discovery.
 
+## Compare two copies after an update
+
+You update a skill in its source folder. Is the copy your agent can access still the same? Compare the two folders you select:
+
+```bash
+node src/cli.js diff ./skills/my-skill ~/.agents/skills/my-skill
+```
+
+For example, in an isolated test with `skills@1.7.4`, a local skill installed with `--copy` stayed at v1 after its source changed to v2. The installer reported that local sources could not be checked automatically and suggested re-adding it. `diff` identified the changed `SKILL.md`. This is one tested setup; behavior depends on installer version and mode. [Original local-update report](https://github.com/vercel-labs/skills/issues/1440).
+
+This read-only command lists differing relative paths and whether each was added, removed or changed. Add `--format json` to include SHA-256 values for CI. Exit 0 means the compared file bytes matched; 1 means differences; 2 means the check could not complete. It does not output file contents, select the authoritative copy, determine what the agent loaded, or update either folder. This is a snapshot: do not edit the trees during comparison. Empty directory-only changes are not compared.
+
+Both roots must be separate, non-overlapping existing directories with a regular `SKILL.md` at each root. Inner symbolic links and special files are refused; a root itself may resolve through a symlink. The scan stops rather than report a partial match above 2,000 entries, 8 MiB per file or 64 MiB total per directory. This is not an atomic security boundary against concurrent hostile filesystem changes. Check actual installed paths and output before sharing.
+
 ## GitHub Actions
 
 Run your normal packaging/install step first, then check its output:
@@ -146,7 +162,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.7.0
+  - uses: LydiaTools/skill-bundle-check@v0.8.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill

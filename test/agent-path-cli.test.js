@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm, writeFile, symlink } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -58,4 +58,25 @@ test('Codex global check accepts custom CODEX_HOME and reports the actual locati
 	assert.equal(isolated.status, 1, 'Explicit --home must not inspect the process CODEX_HOME');
 	const explicit = spawnSync(process.execPath, [...args, '--home', home, '--codex-home', codexHome], { encoding: 'utf8', env });
 	assert.equal(explicit.status, 0, explicit.stderr);
+});
+
+
+test('check-agent identifies a broken relative symlink while preserving a healthy link', async (t) => {
+  const project = await mkdtemp(path.join(os.tmpdir(), 'skill-bundle-link-'));
+  temporaryDirectories.push(project);
+  await mkdir(path.join(project, '.agents'));
+  const skillDir=path.join(project, 'skills-store', 'probe-skill');
+  await mkdir(skillDir, { recursive: true });
+  await writeFile(path.join(skillDir, 'SKILL.md'), '---\nname: probe-skill\ndescription: Synthetic fixture.\n---\n');
+  const link=path.join(project, '.agents', 'skills');
+  try { await symlink('skills-store', link, 'dir'); }
+  catch (error) { if (process.platform === 'win32' && ['EPERM','EACCES'].includes(error.code)) return t.skip('Symlink privileges unavailable'); throw error; }
+  const args=[cliPath,'check-agent','--agent','codex-cli','--scope','project','--skill','probe-skill','--cwd',project];
+  const bad=spawnSync(process.execPath,args,{encoding:'utf8'});
+  assert.equal(bad.status,1,bad.stderr);assert.match(bad.stdout,/BROKEN LINK/);assert.ok(bad.stdout.includes(link));
+  const json=spawnSync(process.execPath,[...args,'--format','json'],{encoding:'utf8'});
+  assert.equal(JSON.parse(json.stdout).brokenLink,link);
+  await rm(link);await symlink('../skills-store',link,'dir');
+  const good=spawnSync(process.execPath,args,{encoding:'utf8'});
+  assert.equal(good.status,0,good.stderr);assert.match(good.stdout,/FOUND/);assert.doesNotMatch(good.stdout,/BROKEN LINK/);
 });

@@ -21,6 +21,8 @@ jobs:
         run: node src/cli.js review-pipes examples/table-pipes.md
       - name: Run synthetic update demo
         run: node examples/update-demo.js
+      - name: Run synthetic content diff demo
+        run: node examples/diff-demo.js
       - name: Run example
         run: node src/cli.js check ./examples/source ./examples/installed
       - name: Exercise the composite action

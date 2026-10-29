@@ -1,6 +1,6 @@
 {
   "name": "skill-bundle-check",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Check installed Agent Skill bundles and documented agent paths without running the skill.",
   "type": "module",
   "engines": {
