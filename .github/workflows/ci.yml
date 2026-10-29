@@ -42,3 +42,4 @@ jobs:
       - run: npm install --no-save --no-package-lock --ignore-scripts playwright@1.62.1
       - run: npx playwright install --with-deps chromium
       - run: node web-tests/browser.mjs
+      - run: node web-tests/diff-browser.mjs

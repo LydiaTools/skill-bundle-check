@@ -141,6 +141,12 @@ Root paths in the JSON are absolute and may contain personal information; review
 
 ## Compare two copies after an update
 
+[Compare browser-provided folder files](https://lydiatools.github.io/skill-bundle-check/web/diff.html) without installing Node. Files stay in the tab. Folder selection support depends on the browser; hidden files, empty folders and symbolic links may be omitted, so a match does not verify full filesystem contents or Agent loading. The page cannot establish whether two selections refer to distinct filesystem directories.
+
+![Browser comparison of two explicitly fictional Skill folders, showing one changed file](docs/assets/skill-diff-web.png)
+
+*The built-in example uses fictional files.*
+
 You update a skill in its source folder. Is the copy your agent can access still the same? Compare the two folders you select:
 
 ```bash
@@ -162,7 +168,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.8.0
+  - uses: LydiaTools/skill-bundle-check@v0.9.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill

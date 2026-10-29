@@ -22,7 +22,7 @@ jobs:
       - name: Assemble public files
         run: |
           mkdir -p _site/web _site/src
-          cp web/index.html web/app.js web/style.css _site/web/
+          cp web/index.html web/app.js web/style.css web/diff.html web/diff.js _site/web/
           cp src/review-pipes.js _site/src/
           printf '%s\n' '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=web/"><title>Skill Bundle Check</title><a href="web/">Open the table review</a>' > _site/index.html
       - uses: actions/configure-pages@v5
