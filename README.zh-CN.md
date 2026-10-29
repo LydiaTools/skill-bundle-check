@@ -2,7 +2,7 @@
 
 **仓库里能用，装进 Agent 之后还好吗？**
 
-Skill Bundle Check 提供两种只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。
+Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。
 
 它不会运行 Skill、启动 Agent，也不会声称 Agent 已在运行时加载了 Skill。
 
@@ -87,6 +87,25 @@ node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope 
 
 此命令会按预期以退出码 1 结束，并报告 `probe-skill` 只在共享 `.agents/skills` 目录，没有出现在 Antigravity CLI 文档中的全局目录。不会启动 Agent。
 
+## 更新前后检查多个 Agent 的 Skill
+
+同一个 Skill 在更新后可能仍在一个 Agent 的目录，却从另一个目录消失。[Spec Kit #5002](https://github.com/github/spec-kit/issues/5002) 报告了一种 Claude/Codex 配置，已有[修复提案](https://github.com/github/spec-kit/pull/5005)。下面只检查文件，不证明 Agent 已加载 Skill。
+
+在本仓库中运行，更新前后使用相同的 Skill 名和目录：
+
+```bash
+node src/cli.js snapshot speckit-git-feature \
+  claude=/path/to/project/.claude/skills codex=/path/to/project/.agents/skills > before.json
+# 正常更新你的项目后，再运行相同检查：
+node src/cli.js snapshot speckit-git-feature \
+  claude=/path/to/project/.claude/skills codex=/path/to/project/.agents/skills > after.json
+node src/cli.js compare before.json after.json
+```
+
+结果区分存在、缺失、断链、不是文件及无法访问。快照中存在缺失、断链或非文件时退出码为 1；比较以更新后的快照为准。任一快照中的无法访问、输入无效或目标不一致时为 2。缺失时仍输出 JSON；需要继续比较时不要用 `&&` 串接。一次隔离的 macOS 复现中，Spec Kit v0.12.4 为 Claude 和 Codex 安装 `speckit-git-feature`；用 v1.2.1 升级两套集成后，将 git 扩展从 1.0.0 更新至 1.0.1，比较结果为 Claude `found → found`、Codex `found → missing`（退出码 1）。这只是指定版本和场景的观察，不代表当前版本或运行时表现。
+
+JSON 内含绝对路径，分享前请检查。多个名称可能指向同一物理目录，不能据此认定存在独立副本。检查不会备份、恢复或阻止删除，也不比较文件内容或证明运行时发现。
+
 ## GitHub Actions
 
 先运行你自己的打包或安装步骤，再检查产物：
@@ -96,7 +115,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.4.0
+  - uses: LydiaTools/skill-bundle-check@v0.5.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import path from 'node:path';
+import { readFile, stat } from 'node:fs/promises';
+import { snapshot, compare } from './presence.js';
 import { checkAgentPath, getAgentProfiles } from './agent-path.js';
 import { checkBundle } from './check.js';
 
@@ -8,6 +10,8 @@ const HELP = `skill-bundle-check — verify links survive a real skill install
 Usage:
   skill-bundle-check check <source-skill-dir> <installed-skill-dir> [--format text|json]
   skill-bundle-check check-agent --skill <name> --scope global|project (--agent <id> | --root <path>) [options]
+  skill-bundle-check snapshot <skill> <label=skills-root> [label=skills-root ...]
+  skill-bundle-check compare <before.json> <after.json>
 
 Example:
   skill-bundle-check check ./skills/my-skill ~/.agents/skills/my-skill
@@ -15,7 +19,8 @@ Example:
   skill-bundle-check check-agent --root ./custom-agent/skills --skill my-skill --scope global
 
 check reads both bundle directories. check-agent looks for SKILL.md at the documented location.
-Both commands are read-only; neither runs nor installs a skill.
+All checks are read-only; none runs nor installs a skill.
+Snapshot and compare output JSON with paths; exit 0 if all targets are found, 1 for a missing/broken target, 2 for unavailable input.
 For Codex global checks, --codex-home overrides CODEX_HOME; --home isolates the default home.
 
 Supported agent profiles:
@@ -29,9 +34,39 @@ async function main(argv) {
 	const [command, ...args] = argv;
 	if (command === 'check') return await runBundleCheck(args);
 	if (command === 'check-agent') return await runAgentCheck(args);
+	if (command === 'snapshot') return await runPresenceSnapshot(args);
+	if (command === 'compare') return await runPresenceCompare(args);
 	console.error(HELP);
 	return 2;
 	}
+
+async function runPresenceSnapshot(args) {
+  const [skill, ...specs] = args;
+  const targets = specs.map(spec => {
+    const i = spec.indexOf('=');
+    if (i < 1 || !spec.slice(i + 1).trim()) throw new Error('Use label=/skills/root');
+    return { name: spec.slice(0, i), root: spec.slice(i + 1) };
+  });
+  const result = await snapshot(skill, targets);
+  console.log(JSON.stringify(result, null, 2));
+  return result.targets.some(t => t.status === 'unavailable') ? 2 : result.targets.some(t => t.status !== 'found') ? 1 : 0;
+}
+
+async function readSnapshot(file) {
+  const metadata = await stat(file);
+  if (!metadata.isFile() || metadata.size > 1024 * 1024) throw new Error('Snapshot must be a regular file no larger than 1 MiB');
+  return JSON.parse(await readFile(file, 'utf8'));
+}
+
+async function runPresenceCompare(args) {
+  if (args.length !== 2) throw new Error('Use compare <before.json> <after.json>');
+  const before = await readSnapshot(args[0]);
+  const after = await readSnapshot(args[1]);
+  const result = compare(before, after);
+  console.log(JSON.stringify({schema:'skill-presence-comparison-v1', skill:after.skill, targets:result}, null, 2));
+  if (result.some(t => t.before === 'unavailable' || t.after === 'unavailable')) return 2;
+  return result.some(t => t.after !== 'found') ? 1 : 0;
+}
 
 async function runBundleCheck(argv) {
 	const [sourceArg, installedArg, ...rest] = argv;

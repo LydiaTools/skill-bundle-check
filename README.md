@@ -2,7 +2,7 @@
 
 **Your skill works in the repo. Does it still work after installation?**
 
-Skill Bundle Check has two read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root.
+Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots.
 
 It does not run the skill, start the agent, or claim that the agent loaded it at runtime.
 
@@ -87,6 +87,25 @@ node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope 
 
 The command intentionally exits with code 1 and reports that `probe-skill` exists under the shared `.agents/skills` root, not Antigravity CLI's documented global root. No agent is launched.
 
+## Compare installations before and after an update
+
+An update can leave a Skill present for one agent and missing for another. The open [Spec Kit report #5002](https://github.com/github/spec-kit/issues/5002) describes this in one Claude/Codex configuration; [a proposed fix](https://github.com/github/spec-kit/pull/5005) is under review. The check below observes files, not whether an agent actually loads them.
+
+From this repository, choose the same skill and explicitly named roots each time:
+
+```bash
+node src/cli.js snapshot speckit-git-feature \
+  claude=/path/to/project/.claude/skills codex=/path/to/project/.agents/skills > before.json
+# Perform your normal update in the project, then run the same check:
+node src/cli.js snapshot speckit-git-feature \
+  claude=/path/to/project/.claude/skills codex=/path/to/project/.agents/skills > after.json
+node src/cli.js compare before.json after.json
+```
+
+JSON reports `found`, `missing`, `broken-link`, `not-file`, or `unavailable`. Snapshot exits 1 when a target is missing, broken or not a file; compare exits 1 when any target is missing, broken or not a file in the after snapshot. An unavailable target in either comparison snapshot, invalid input, or mismatched target sets exits 2. A snapshot containing any missing target still writes JSON and exits 1, so do not chain it with `&&` if you need the comparison. In one isolated macOS reproduction, Spec Kit v0.12.4 installed `speckit-git-feature` for Claude and Codex. After upgrading both integrations with v1.2.1 and updating the git extension from 1.0.0 to 1.0.1, the comparison showed Claude `found → found` and Codex `found → missing` (exit 1). This is one version-specific observation, not a claim about current versions or agent runtime.
+
+Root paths in the JSON are absolute and may contain personal information; review them before sharing. Two names may point to the same physical directory; they are not proof of independent copies. The tool reads presence at the time of each check and does not back up, restore, prevent deletion, compare contents or establish agent discovery.
+
 ## GitHub Actions
 
 Run your normal packaging/install step first, then check its output:
@@ -96,7 +115,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.4.0
+  - uses: LydiaTools/skill-bundle-check@v0.5.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill
