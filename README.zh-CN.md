@@ -148,7 +148,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.8.0
+  - uses: LydiaTools/skill-bundle-check@v0.9.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill
@@ -197,6 +197,12 @@ npm test
 ```
 
 ## 对比源目录和已安装副本
+
+[在浏览器对比选择的文件夹](https://lydiatools.github.io/skill-bundle-check/web/diff.html?lang=zh)，无需安装 Node。文件只在当前标签页处理；浏览器可能不提供隐藏文件、空目录或符号链接，所以结果一致不代表完整目录一致，也不证明 Agent 已加载。网页无法确认两次选择是否来自不同的物理目录。
+
+![浏览器内对比两个虚构 Skill 文件夹，显示一个不同文件](docs/assets/skill-diff-web.png)
+
+*图中使用内置的虚构示例。*
 
 ```bash
 node src/cli.js diff ./skills/my-skill ~/.agents/skills/my-skill
