@@ -2,6 +2,8 @@
 
 **Your skill works in the repo. Does it still work after installation?**
 
+[Compare Skill folders online](https://lydiatools.github.io/skill-bundle-check/web/diff.html) · [Review Markdown tables](https://lydiatools.github.io/skill-bundle-check/web/) · [中文说明](README.zh-CN.md)
+
 Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares file bytes between two explicitly selected skill folders. `review-pipes` points out certain Markdown table escapes for human review.
 
 It does not run the skill, start the agent, or claim that the agent loaded it at runtime.
@@ -22,7 +24,7 @@ Existing structure and security checks are useful before publishing. This tool a
 
 ## Quick start
 
-[Try the table-escape review in your browser](https://lydiatools.github.io/skill-bundle-check/web/) without installing Node.
+Try the [folder comparison](https://lydiatools.github.io/skill-bundle-check/web/diff.html) or [table-escape review](https://lydiatools.github.io/skill-bundle-check/web/) in your browser without installing Node.
 
 Use Node.js 20 or later. Cloning the repository requires network access; once the files are on your machine, the checks need no dependencies, account, or network access.
 

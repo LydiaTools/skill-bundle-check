@@ -2,6 +2,8 @@
 
 **仓库里能用，装进 Agent 之后还好吗？**
 
+[在线对比 Skill 文件夹](https://lydiatools.github.io/skill-bundle-check/web/diff.html?lang=zh) · [检查 Markdown 表格](https://lydiatools.github.io/skill-bundle-check/web/?lang=zh) · [English](README.md)
+
 Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个指定目录的文件内容。`review-pipes` 提示人工检查部分 Markdown 表格转义。
 
 它不会运行 Skill、启动 Agent，也不会声称 Agent 已在运行时加载了 Skill。
@@ -22,7 +24,7 @@ Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地�
 
 ## 快速开始
 
-[在线试用表格转义检查](https://lydiatools.github.io/skill-bundle-check/web/?lang=zh)，无需安装 Node。
+无需安装 Node，可在浏览器[对比 Skill 文件夹](https://lydiatools.github.io/skill-bundle-check/web/diff.html?lang=zh)或[检查表格转义](https://lydiatools.github.io/skill-bundle-check/web/?lang=zh)。
 
 需要 Node.js 20 或更高版本。克隆仓库需要联网；文件下载到本机后，运行检查无需额外依赖、账号或网络。
 
