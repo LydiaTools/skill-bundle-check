@@ -2,6 +2,7 @@
 import path from 'node:path';
 import { readFile, stat } from 'node:fs/promises';
 import { snapshot, compare } from './presence.js';
+import { inspectMarkdown } from './review-pipes.js';
 import { checkAgentPath, getAgentProfiles } from './agent-path.js';
 import { checkBundle } from './check.js';
 
@@ -12,6 +13,7 @@ Usage:
   skill-bundle-check check-agent --skill <name> --scope global|project (--agent <id> | --root <path>) [options]
   skill-bundle-check snapshot <skill> <label=skills-root> [label=skills-root ...]
   skill-bundle-check compare <before.json> <after.json>
+  skill-bundle-check review-pipes <markdown-file> [--format text|json]
 
 Example:
   skill-bundle-check check ./skills/my-skill ~/.agents/skills/my-skill
@@ -20,6 +22,7 @@ Example:
 
 check reads both bundle directories. check-agent looks for SKILL.md at the documented location.
 All checks are read-only; none runs nor installs a skill.
+review-pipes offers non-blocking review hints for escaped pipes in inline code within ordinary Markdown tables.
 Snapshot and compare output JSON with paths; exit 0 if all targets are found, 1 for a missing/broken target, 2 for unavailable input.
 For Codex global checks, --codex-home overrides CODEX_HOME; --home isolates the default home.
 
@@ -36,9 +39,30 @@ async function main(argv) {
 	if (command === 'check-agent') return await runAgentCheck(args);
 	if (command === 'snapshot') return await runPresenceSnapshot(args);
 	if (command === 'compare') return await runPresenceCompare(args);
+	if (command === 'review-pipes') return await runPipeReview(args);
 	console.error(HELP);
 	return 2;
 	}
+
+async function runPipeReview(args) {
+  const [file, ...rest] = args;
+  if (!file || !([0,2].includes(rest.length)) || (rest.length && rest[0] !== '--format')) throw new Error('Use review-pipes <markdown-file> [--format text|json]');
+  const format = rest.length ? rest[1] : 'text';
+  if (!['text','json'].includes(format)) throw new Error(`Unknown output format: ${format}`);
+  const absolute = path.resolve(file);
+  const metadata = await stat(absolute);
+  if (!metadata.isFile() || metadata.size > 1024 * 1024) throw new Error('Markdown must be a regular file no larger than 1 MiB');
+  const found = inspectMarkdown(await readFile(absolute, 'utf8'));
+  const truncated = found.length > 1000;
+  const findings = found.slice(0, 1000);
+  if (format === 'json') {
+    console.log(JSON.stringify({schema:'skill-table-pipe-review-v1',file:absolute,truncated,findings},null,2));
+  } else {
+    for (const finding of findings) console.log(`REVIEW  ${absolute}:${finding.line}:${finding.column}  ${finding.code}`);
+    console.log(`\n${findings.length} occurrence(s) to review${truncated ? ' (output truncated; further matches exist)' : ''}. Escapes can be intentional; no command was run or changed.`);
+  }
+  return 0; // These are review hints, not established failures.
+}
 
 async function runPresenceSnapshot(args) {
   const [skill, ...specs] = args;

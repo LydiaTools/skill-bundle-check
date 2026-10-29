@@ -2,7 +2,7 @@
 
 **仓库里能用，装进 Agent 之后还好吗？**
 
-Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。
+Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`review-pipes` 提示人工检查部分 Markdown 表格转义。
 
 它不会运行 Skill、启动 Agent，也不会声称 Agent 已在运行时加载了 Skill。
 
@@ -99,6 +99,17 @@ node examples/update-demo.js
 
 示例在新建临时目录中创建两份虚构 Skill，移除其中一份来模拟更新，再调用真实命令。它输出 `claude: found -> found` 和 `codex: found -> missing`；比较命令返回退出码 1；示例正常完成时自身返回 0。运行结束后会清理该临时目录，不会改动你已安装的 Skill。
 
+## 检查表格里的命令
+
+表格显示的是竖线，Skill 原文中可能带有反斜杠。反斜杠是否正确，取决于命令和正则语法。[GitHub 的表格说明](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-tables)介绍了转义；[leanrea #1](https://github.com/aicodeking/leanrea/issues/1)报告了复制后表现不同的实例。
+
+```bash
+node src/cli.js review-pipes examples/table-pipes.md
+node src/cli.js review-pipes /path/to/SKILL.md --format json
+```
+
+虚构示例有两个**人工复核提示**，其中一个是可能有意匹配竖线的正则。结果给出文件、从 1 开始的行号和 UTF-16 列号（反斜杠位置）。有提示时退出码仍为 0；文件不可读或输入无效时为 2。此近似检查只覆盖普通单行表格中的行内代码，不是完整 Markdown 或 Shell 解析器，可能漏报或多报。最多输出 1,000 条提示，更多时会明确标记截断。转义可能正确，例如 GNU 基本正则的交替；没有提示也不代表命令一定正确。工具不会运行、解释或修改命令，请结合上下文判断。将命令放在表格外的代码块中，可以更方便地对照原文和渲染结果。
+
 ## 更新前后检查多个 Agent 的 Skill
 
 同一个 Skill 在更新后可能仍在一个 Agent 的目录，却从另一个目录消失。[Spec Kit #5002](https://github.com/github/spec-kit/issues/5002) 报告了一种 Claude/Codex 配置，已有[修复提案](https://github.com/github/spec-kit/pull/5005)。下面只检查文件，不证明 Agent 已加载 Skill。
@@ -127,7 +138,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.5.1
+  - uses: LydiaTools/skill-bundle-check@v0.6.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill

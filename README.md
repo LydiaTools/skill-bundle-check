@@ -2,7 +2,7 @@
 
 **Your skill works in the repo. Does it still work after installation?**
 
-Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots.
+Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `review-pipes` points out certain Markdown table escapes for human review.
 
 It does not run the skill, start the agent, or claim that the agent loaded it at runtime.
 
@@ -99,6 +99,17 @@ node examples/update-demo.js
 
 The demo creates two fictional Skill folders in a new temporary directory, removes one to simulate an update, and runs the real CLI. It prints `claude: found -> found` and `codex: found -> missing`; the comparison returns exit 1, while the successfully completed demo itself returns exit 0. The demo then removes its temporary directory. It does not touch your installed Skills.
 
+## Review a command hidden inside a table
+
+A table can show a pipe while the raw Skill file contains a backslash before it. Is the backslash part of the intended command? That depends on the shell and regex syntax. [GitHub documents table escaping](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-tables); [leanrea #1](https://github.com/aicodeking/leanrea/issues/1) reports one real case where copied commands behaved differently.
+
+```bash
+node src/cli.js review-pipes examples/table-pipes.md
+node src/cli.js review-pipes /path/to/SKILL.md --format json
+```
+
+The fictional example gives two **review hints**, including a deliberately literal extended-regex pipe. Results name the file and 1-based line and UTF-16 column of the backslash. Hints exit 0; unreadable files or invalid input exit 2. This approximate scan covers inline code on ordinary single-line pipe-table rows; it is not a full Markdown or shell parser and can miss or over-report cases. Output stops at 1,000 hints and explicitly reports truncation when more exist. An escape can be correct (for example GNU basic-regex alternation), and a clean scan does not prove commands work. It never runs, interprets or changes a command. Check each result in context; a fenced code block outside a table can make commands easier to inspect in raw and rendered views.
+
 ## Compare installations before and after an update
 
 An update can leave a Skill present for one agent and missing for another. The open [Spec Kit report #5002](https://github.com/github/spec-kit/issues/5002) describes this in one Claude/Codex configuration; [a proposed fix](https://github.com/github/spec-kit/pull/5005) is under review. The check below observes files, not whether an agent actually loads them.
@@ -127,7 +138,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.5.1
+  - uses: LydiaTools/skill-bundle-check@v0.6.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill
