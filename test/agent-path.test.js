@@ -54,6 +54,36 @@ test('uses the project skill directory for project scope', async () => {
 	assert.equal(result.expectedRoot, path.join(cwd, '.agents', 'skills'));
 });
 
+test('recognizes a Codex skill in the default CODEX_HOME without calling the agent', async () => {
+	const home = await makeTemporaryDirectory();
+	const codexRoot = path.join(home, '.codex', 'skills');
+	await addSkill(codexRoot, 'probe-skill');
+	const result = await checkAgentPath({ agent: 'codex-cli', skill: 'probe-skill', scope: 'global', home });
+	assert.equal(result.expectedPresent, false);
+	assert.equal(result.status, 'found-codex-home');
+	assert.deepEqual(result.otherLocations.map((x) => x.entry), [path.join(codexRoot, 'probe-skill', 'SKILL.md')]);
+});
+
+test('reports both Codex global locations when both exist', async () => {
+	const home = await makeTemporaryDirectory();
+	await addSkill(path.join(home, '.agents', 'skills'), 'probe-skill');
+	await addSkill(path.join(home, '.codex', 'skills'), 'probe-skill');
+	const result = await checkAgentPath({ agent: 'codex-cli', skill: 'probe-skill', scope: 'global', home });
+	assert.equal(result.status, 'found');
+	assert.equal(result.expectedPresent, true);
+	assert.equal(result.otherLocations[0].kind, 'codex-home');
+});
+
+test('accepts an explicit Codex home without reading the default', async () => {
+	const home = await makeTemporaryDirectory();
+	const codexHome = await makeTemporaryDirectory();
+	await addSkill(path.join(codexHome, 'skills'), 'probe-skill');
+	const result = await checkAgentPath({ agent: 'codex-cli', skill: 'probe-skill', scope: 'global', home, codexHome });
+	assert.equal(result.status, 'found-codex-home');
+	assert.equal(result.otherLocations[0].root, path.join(codexHome, 'skills'));
+	await assert.rejects(checkAgentPath({ agent: 'claude-code', skill: 'probe-skill', scope: 'global', home, codexHome }), /codex-home/);
+});
+
 test('checks an explicitly supplied root', async () => {
 	const root = await makeTemporaryDirectory();
 	await addSkill(root, 'probe-skill');

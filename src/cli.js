@@ -16,6 +16,7 @@ Example:
 
 check reads both bundle directories. check-agent looks for SKILL.md at the documented location.
 Both commands are read-only; neither runs nor installs a skill.
+For Codex global checks, --codex-home overrides CODEX_HOME; --home isolates the default home.
 
 Supported agent profiles:
 ${Object.entries(getAgentProfiles()).map(([id, label]) => `  ${id.padEnd(18)} ${label}`).join('\n')}`;
@@ -61,7 +62,11 @@ async function runBundleCheck(argv) {
 }
 
 async function runAgentCheck(argv) {
-	const options = parseOptions(argv, new Set(['agent', 'skill', 'scope', 'root', 'home', 'cwd', 'format']));
+	const options = parseOptions(argv, new Set(['agent', 'skill', 'scope', 'root', 'home', 'cwd', 'format', 'codex-home']));
+	if (options['codex-home']) {
+		options.codexHome = options['codex-home'];
+		delete options['codex-home'];
+	}
 	if (!options.skill || !options.scope) {
 		throw new Error('`--skill` and `--scope` are required.');
 	}
@@ -77,7 +82,7 @@ async function runAgentCheck(argv) {
 	} else {
 		printAgentResult(result);
 	}
-	return result.expectedPresent || result.status === 'found-legacy' ? 0 : 1;
+	return result.expectedPresent || ['found-legacy', 'found-codex-home'].includes(result.status) ? 0 : 1;
 }
 
 function parseOptions(argv, allowed) {
@@ -111,14 +116,11 @@ function printAgentResult(result) {
 	if (result.expectedPresent) {
 		console.log('FOUND  SKILL.md exists at the documented path.');
 	} else {
-		console.log('NOT FOUND  SKILL.md is missing from the documented path.');
-		for (const location of result.otherLocations) {
-			if (location.kind === 'documented-legacy') {
-				console.log(`FOUND LEGACY  ${location.entry}`);
-			} else {
-				console.log(`FOUND OTHER ROOT  ${location.entry}`);
-			}
-		}
+		console.log('NOT FOUND  SKILL.md is missing from the expected root shown above.');
+	}
+	for (const location of result.otherLocations) {
+		const label = location.kind === 'documented-legacy' ? 'FOUND LEGACY' : location.kind === 'codex-home' ? 'FOUND CODEX HOME' : 'FOUND OTHER ROOT';
+		console.log(`${label}  ${location.entry}`);
 	}
 	for (const document of result.documents) console.log(`Docs: ${document}`);
 }

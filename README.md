@@ -38,6 +38,8 @@ node src/cli.js check ./skills/my-skill ~/.agents/skills/my-skill
 
 The first path is the source skill folder containing `SKILL.md`. The second is the exact installed or packaged folder to verify. The command only reads files; it does not run install scripts or skill code.
 
+The source or installed folder may be a symbolic link to a separate directory. The checker resolves the folder before comparing; references inside the bundle are still checked for escaping its resolved root. In an isolated test, `skills@1.7.4` created a Claude Code symlink when installing the same synthetic Skill for Claude Code and Cursor; v0.3.0 rejected that installed path, while v0.4.0 checks it. This does not establish that every installer or platform uses symlinks.
+
 Check whether an agent has a Skill at its documented global path:
 
 ```bash
@@ -61,6 +63,8 @@ node src/cli.js check-agent --root ./custom-agent/skills --skill my-skill --scop
 ```
 
 Built-in profiles cover `claude-code`, `codex-cli`, `antigravity-cli`, `antigravity-ide`, and `antigravity-app`. Profile paths link to the platform documentation used for the mapping: [Claude Code Skills](https://code.claude.com/docs/en/skills), [Codex Skills](https://developers.openai.com/codex/skills/), and [Antigravity Skills](https://www.antigravity.google/docs/skills). Project scope checks the project directory represented by the current working directory. A missing Skill returns exit code 1. If the Skill is found in `~/.agents/skills` but not in the selected global root, the report shows both paths. A documented legacy Antigravity IDE path is also recognized. This checks file placement; it does not confirm runtime discovery or execution.
+
+From v0.4.0, Codex global checks look in both `~/.agents/skills` and `$CODEX_HOME/skills` (default `~/.codex/skills`) and report every matching root. Set `CODEX_HOME` for the process, or use `--codex-home /path/to/codex-home`; when using `--home` for a fixture, the default Codex home is `.codex` under that home. An isolated native Codex app-server `skills/list` test found separate synthetic Skills in both user roots. File presence alone still does not prove that your running agent loaded a particular Skill; versions and configuration may differ.
 
 Reproduce an install-path mismatch with the included synthetic fixture:
 
@@ -89,7 +93,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.3.0
+  - uses: LydiaTools/skill-bundle-check@v0.4.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill

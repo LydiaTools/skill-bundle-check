@@ -42,7 +42,7 @@ export function getAgentProfiles() {
 	return Object.fromEntries(Object.entries(profiles).map(([id, profile]) => [id, profile.label]));
 }
 
-export async function checkAgentPath({ agent, skill, scope, root, home = os.homedir(), cwd = process.cwd() }) {
+export async function checkAgentPath({ agent, skill, scope, root, home, codexHome, cwd = process.cwd() }) {
 	if (!skill || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(skill)) {
 		throw new Error('Skill name must be one folder name using letters, numbers, dots, underscores, or hyphens.');
 	}
@@ -52,6 +52,10 @@ export async function checkAgentPath({ agent, skill, scope, root, home = os.home
 	if (Boolean(agent) === Boolean(root)) {
 		throw new Error('Choose exactly one of `agent` or `root`.');
 	}
+	if (codexHome && (agent !== 'codex-cli' || scope !== 'global')) {
+		throw new Error('`--codex-home` applies only to the global codex-cli profile.');
+	}
+	const userHome = home ?? os.homedir();
 
 	let profile;
 	if (agent) {
@@ -60,21 +64,29 @@ export async function checkAgentPath({ agent, skill, scope, root, home = os.home
 	}
 	if (!profile && !root) throw new Error('Choose a supported --agent or provide a custom --root.');
 
-	const base = path.resolve(root || path.join(scope === 'global' ? home : cwd, ...(scope === 'global' ? profile.globalParts : profile.projectParts)));
+	const base = path.resolve(root || path.join(scope === 'global' ? userHome : cwd, ...(scope === 'global' ? profile.globalParts : profile.projectParts)));
 	const skillPath = path.join(base, skill);
 	const entryPath = path.join(skillPath, 'SKILL.md');
 	const expectedPresent = await isFile(entryPath);
 	const otherLocations = [];
+	if (agent === 'codex-cli' && scope === 'global') {
+		// An explicit home isolates test fixtures from the caller's CODEX_HOME.
+		const codexRoot = path.resolve(codexHome || (home === undefined ? process.env.CODEX_HOME : undefined) || path.join(userHome, '.codex'), 'skills');
+		const codexEntry = path.join(codexRoot, skill, 'SKILL.md');
+		if (codexRoot !== base && await isFile(codexEntry)) {
+			otherLocations.push({ kind: 'codex-home', root: codexRoot, entry: codexEntry });
+		}
+	}
 
 	if (!expectedPresent && scope === 'global') {
 		if (profile?.legacyGlobalParts) {
 			for (const parts of profile.legacyGlobalParts) {
-				const legacyRoot = path.resolve(home, ...parts);
+				const legacyRoot = path.resolve(userHome, ...parts);
 				const legacyEntry = path.join(legacyRoot, skill, 'SKILL.md');
 				if (await isFile(legacyEntry)) otherLocations.push({ kind: 'documented-legacy', root: legacyRoot, entry: legacyEntry });
 			}
 		}
-		const sharedRoot = path.resolve(home, '.agents', 'skills');
+		const sharedRoot = path.resolve(userHome, '.agents', 'skills');
 		if (path.resolve(sharedRoot) !== path.resolve(base)) {
 			const sharedEntry = path.join(sharedRoot, skill, 'SKILL.md');
 			if (await isFile(sharedEntry)) otherLocations.push({ kind: 'shared-default', root: sharedRoot, entry: sharedEntry });
@@ -83,7 +95,8 @@ export async function checkAgentPath({ agent, skill, scope, root, home = os.home
 
 	const legacy = otherLocations.find((location) => location.kind === 'documented-legacy');
 	const shared = otherLocations.find((location) => location.kind === 'shared-default');
-	const status = expectedPresent ? 'found' : legacy ? 'found-legacy' : shared ? 'found-other-root' : 'not-found';
+	const codex = otherLocations.find((location) => location.kind === 'codex-home');
+	const status = expectedPresent ? 'found' : codex ? 'found-codex-home' : legacy ? 'found-legacy' : shared ? 'found-other-root' : 'not-found';
 
 	return {
 		agent: agent || 'custom',

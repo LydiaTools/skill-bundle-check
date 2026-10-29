@@ -1,4 +1,4 @@
-import { lstat, readFile, readdir, realpath } from 'node:fs/promises';
+import { lstat, stat, readFile, readdir, realpath } from 'node:fs/promises';
 import path from 'node:path';
 
 const MARKDOWN_EXTENSIONS = new Set(['.md', '.markdown', '.mdx']);
@@ -84,7 +84,7 @@ async function resolveDirectory(input, label) {
 	const absolute = path.resolve(input);
 	let info;
 	try {
-		info = await lstat(absolute);
+		info = await stat(absolute);
 	} catch {
 		throw new Error(`${label} directory does not exist: ${absolute}`);
 	}

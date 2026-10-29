@@ -38,6 +38,8 @@ node src/cli.js check ./skills/my-skill ~/.agents/skills/my-skill
 
 第一个路径是包含 `SKILL.md` 的源目录；第二个路径是安装器或发行流程实际生成的目录。命令仅读取文件，不执行安装脚本或 Skill 代码。
 
+源目录或安装目录可以是指向独立目录的符号链接。检查器会先解析实际目录，再检查包内引用是否越出该目录。在隔离测试中，`skills@1.7.4` 把同一个合成 Skill 同时安装给 Claude Code 和 Cursor 时，为 Claude Code 创建了符号链接；v0.3.0 拒绝这个路径，v0.4.0 能检查它。这不代表所有安装器或平台都会使用符号链接。
+
 检查 Agent 的全局安装目录里是否有某个 Skill：
 
 ```bash
@@ -61,6 +63,8 @@ node src/cli.js check-agent --root ./custom-agent/skills --skill my-skill --scop
 ```
 
 目前内置了 `claude-code`、`codex-cli`、`antigravity-cli`、`antigravity-ide` 和 `antigravity-app` 路径，映射依据分别链接到 [Claude Code Skills 文档](https://code.claude.com/docs/en/skills)、[Codex Skills 文档](https://developers.openai.com/codex/skills/) 和 [Antigravity Skills 文档](https://www.antigravity.google/docs/skills)。项目级检查以当前工作目录代表的项目目录为准。目标目录缺少 Skill 时返回退出码 1；如果 Skill 只在 `~/.agents/skills`，报告会同时显示预期路径与实际找到的路径。Antigravity IDE 文档支持的旧路径也会识别。检查文件落点不等于确认 Agent 已在运行时加载或执行 Skill。
+
+从 v0.4.0 起，Codex 全局检查同时查看 `~/.agents/skills` 和 `$CODEX_HOME/skills`（默认 `~/.codex/skills`），并列出找到的目录。可设置进程的 `CODEX_HOME`，也可用 `--codex-home /路径/到/codex-home` 指定；使用 `--home` 检查隔离样例时，默认 Codex 目录是该 home 下的 `.codex`。隔离环境中的原生 Codex app-server `skills/list` 测试在两个用户目录各发现了一个合成 Skill。文件存在仍不证明你正在使用的 Agent 已加载该 Skill；不同版本或配置可能不同。
 
 使用仓库内的合成样例复现安装目录不匹配：
 
@@ -89,7 +93,7 @@ steps:
   - uses: actions/checkout@v4
   - name: Build skill bundle
     run: ./scripts/build-skill.sh
-  - uses: LydiaTools/skill-bundle-check@v0.3.0
+  - uses: LydiaTools/skill-bundle-check@v0.4.0
     with:
       source: ./skills/my-skill
       installed: ./dist/my-skill
