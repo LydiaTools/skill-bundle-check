@@ -88,7 +88,11 @@ export async function checkAgentPath({ agent, skill, scope, root, home, codexHom
 				if (await isFile(legacyEntry)) otherLocations.push({ kind: 'documented-legacy', root: legacyRoot, entry: legacyEntry });
 			}
 		}
-		const sharedRoot = path.resolve(userHome, '.agents', 'skills');
+	}
+	// Claude's project path differs from the shared project root used by other agents.
+	// This is only a location hint, not evidence that Claude loaded the skill.
+	if (!expectedPresent && (scope === 'global' || scope === 'project' && agent === 'claude-code')) {
+		const sharedRoot = path.resolve(scope === 'global' ? userHome : cwd, '.agents', 'skills');
 		if (path.resolve(sharedRoot) !== path.resolve(base)) {
 			const sharedEntry = path.join(sharedRoot, skill, 'SKILL.md');
 			if (await isFile(sharedEntry)) otherLocations.push({ kind: 'shared-default', root: sharedRoot, entry: sharedEntry });

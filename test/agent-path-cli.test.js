@@ -13,6 +13,23 @@ afterEach(async () => {
 	await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
 });
 
+test('Claude project check reports the shared project location without claiming it loaded', async () => {
+	const project = await mkdtemp(path.join(os.tmpdir(), 'skill-bundle-project-'));
+	temporaryDirectories.push(project);
+	const shared = path.join(project, '.agents', 'skills', 'probe-skill');
+	await mkdir(shared, { recursive: true });
+	await writeFile(path.join(shared, 'SKILL.md'), '---\nname: probe-skill\ndescription: Synthetic CLI fixture.\n---\n');
+	const args=[cliPath,'check-agent','--agent','claude-code','--skill','probe-skill','--scope','project','--cwd',project];
+	const result=spawnSync(process.execPath,args,{encoding:'utf8'});
+	assert.equal(result.status,1,result.stderr);
+	assert.match(result.stdout,/NOT FOUND/);
+	assert.match(result.stdout,/FOUND OTHER ROOT/);
+	assert.ok(result.stdout.includes(path.join(shared,'SKILL.md')));
+	const json=spawnSync(process.execPath,[...args,'--format','json'],{encoding:'utf8'});
+	assert.equal(json.status,1,json.stderr);
+	assert.equal(JSON.parse(json.stdout).status,'found-other-root');
+});
+
 test('check-agent exits nonzero and names both roots for a misplaced global skill', async () => {
 	const home = await mkdtemp(path.join(os.tmpdir(), 'skill-bundle-check-cli-'));
 	temporaryDirectories.push(home);

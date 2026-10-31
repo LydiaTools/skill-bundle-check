@@ -53,6 +53,7 @@ jobs:
           node-version: 22
       - run: node --test test/install-target.test.js
       - run: node --test test/inline-path-windows.test.js
+      - run: node --test --test-name-pattern="Claude project|reports a Claude project" test/agent-path.test.js test/agent-path-cli.test.js
 
   web-browser:
     runs-on: ubuntu-24.04

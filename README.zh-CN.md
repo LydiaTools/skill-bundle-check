@@ -89,6 +89,8 @@ node src/cli.js check-agent --agent claude-code --skill my-skill --scope project
 node src/cli.js check-agent --agent codex-cli --skill my-skill --scope project
 ```
 
+当 Claude Code 的项目目录缺少 Skill，但当前项目的 `.agents/skills/` 中有同名 Skill 时，v0.14.3 会显示另一个位置，并因预期路径缺失仍返回退出码 `1`。这可用于排查 [Claude Code #31005](https://github.com/anthropics/claude-code/issues/31005) 中讨论的跨 Agent 目录差异；工具不会安装、创建链接或验证运行时加载。请从项目目录运行，或传入 `--cwd /path/to/project`。旧的 v0.14.2 下载包不包含这条项目级提示。
+
 检查其他 Agent 时，直接传入它文档中的 Skills 根目录：
 
 ```bash
@@ -127,7 +129,7 @@ node src/cli.js check-target "$HOME/.claude/skills/unslop"
 
 如果唯一的 `SKILL.md` 直接位于 ZIP 根目录，检查页面会向 Claude 网页版和桌面版用户提示顶层文件夹的要求。该提示不检查其余目录结构，也不验证上传结果；v0.14.2 已包含，固定的 v0.14.1 下载包不包含。
 
-使用[下载的 v0.14.2 ZIP](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.14.2) 时，解压后在该目录打开终端，运行 `python3 -m http.server 8000 --bind 127.0.0.1`（Windows 可用 `py -3` 替代 `python3`），然后在浏览器打开 `http://127.0.0.1:8000/web/zip.html`。使用 Ctrl+C 停止本地服务。页面在浏览器中读取选中的 ZIP，不会将其发送给服务端。
+使用[下载的 v0.14.3 ZIP](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.14.3) 时，解压后在该目录打开终端，运行 `python3 -m http.server 8000 --bind 127.0.0.1`（Windows 可用 `py -3` 替代 `python3`），然后在浏览器打开 `http://127.0.0.1:8000/web/zip.html`。使用 Ctrl+C 停止本地服务。页面在浏览器中读取选中的 ZIP，不会将其发送给服务端。
 
 上传 ZIP 失败时，可先[在浏览器选择文件](https://lydiatools.github.io/skill-bundle-check/web/zip.html?lang=zh)。文件留在当前标签页，只读取 ZIP 目录信息。网页版支持 UTF-8 和 ASCII 文件名，暂不支持旧式非 ASCII 编码和 Unicode Path 扩展字段。
 
