@@ -16,13 +16,15 @@ It does not run the skill, start the agent, or claim that the agent loaded it at
 
 People have reported Agent Skills whose `SKILL.md` points to files that are missing or unreachable after installation. This shows up in different forms:
 
-- [Agent-Reach](https://github.com/Panniantong/Agent-Reach/issues/622), [Hallmark](https://github.com/Nutlope/hallmark/issues/76), [Tastemaker](https://github.com/codeswithroh/tastemaker/issues/86), and [Microsoft APM](https://github.com/microsoft/apm/issues/2966) report supporting files omitted from installed skills.
-- [Addy Osmani's agent-skills #468](https://github.com/addyosmani/agent-skills/issues/468) reports shared references that remain unreachable even in a full plugin install because the links resolve from each skill directory. [#597](https://github.com/addyosmani/agent-skills/issues/597) documents the related single-skill install case.
-- [OpenAI Codex #8364](https://github.com/openai/codex/issues/8364) records a referenced script missing from the installed skill; the maintainer linked it to a separate fix in progress.
+- [Agent-Reach](https://github.com/Panniantong/Agent-Reach/issues/622), [Hallmark](https://github.com/Nutlope/hallmark/issues/76), and [Tastemaker](https://github.com/codeswithroh/tastemaker/issues/86) report installations or conversions that leave referenced resources unavailable.
+- [Addy Osmani's agent-skills #468](https://github.com/addyosmani/agent-skills/issues/468) reported shared references that did not resolve even in a full plugin install; [#469](https://github.com/addyosmani/agent-skills/pull/469) fixed those links. [#597](https://github.com/addyosmani/agent-skills/issues/597) reports a separate single-skill installation case.
+- [OpenAI Codex #8364](https://github.com/openai/codex/issues/8364) reports an agent sometimes failing to find a referenced script; the maintainer linked it to a separate issue. The report does not establish that the installed script itself was missing.
 - [CLI-Anything #331](https://github.com/HKUDS/CLI-Anything/issues/331) reports an installer that copies the skill but leaves its referenced methodology files behind.
 - [Vercel Skills #1851](https://github.com/vercel-labs/skills/issues/1851) reports a successful global install that places a Skill in a shared directory instead of Antigravity CLI's documented global directory.
 
 Format validation alone may not catch these failures. A [reproduction report](https://tinkerhood.com/learn/skill-references-and-assets/) shows a skill-reference check passing while the referenced file is missing. This tool checks the actual source and installed folders instead.
+
+Related but outside this check: [Microsoft APM #2966](https://github.com/microsoft/apm/issues/2966) reports a resource that **was installed**, while a generated Codex agent TOML file retained a link relative to its old location. `check` reads Markdown in Skill folders; it does not inspect generated agent TOML or prove how an agent resolves it.
 
 Existing structure and security checks are useful before publishing. This tool adds one narrow check: compare the skill folder you intend to ship with the copy users will actually install.
 

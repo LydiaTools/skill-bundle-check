@@ -16,13 +16,15 @@ Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地�
 
 社区里已经出现多种 Skill 安装后引用失效的问题：
 
-- [Agent-Reach](https://github.com/Panniantong/Agent-Reach/issues/622)、[Hallmark](https://github.com/Nutlope/hallmark/issues/76)、[Tastemaker](https://github.com/codeswithroh/tastemaker/issues/86) 和 [Microsoft APM](https://github.com/microsoft/apm/issues/2966) 都报告过安装包漏掉 Skill 引用的文件。
-- [Addy Osmani 的 agent-skills #468](https://github.com/addyosmani/agent-skills/issues/468) 报告：即使完整安装插件，共享文件也可能因路径相对目录不对而无法读取；[#597](https://github.com/addyosmani/agent-skills/issues/597) 记录了只安装单个 Skill 时缺少共享文件的问题。
-- [OpenAI Codex #8364](https://github.com/openai/codex/issues/8364) 记录了安装后的 Skill 找不到它引用的脚本；维护者将其关联到另一个正在修复的问题。
+- [Agent-Reach](https://github.com/Panniantong/Agent-Reach/issues/622)、[Hallmark](https://github.com/Nutlope/hallmark/issues/76) 和 [Tastemaker](https://github.com/codeswithroh/tastemaker/issues/86) 报告过安装或转换后无法取得所引用资源的情况。
+- [Addy Osmani 的 agent-skills #468](https://github.com/addyosmani/agent-skills/issues/468) 曾报告完整安装插件后共享文件的相对链接无法解析；[#469](https://github.com/addyosmani/agent-skills/pull/469) 已修复这些链接。[#597](https://github.com/addyosmani/agent-skills/issues/597) 则报告了只安装单个 Skill 时的另一个问题。
+- [OpenAI Codex #8364](https://github.com/openai/codex/issues/8364) 报告 Agent 有时找不到引用的脚本，维护者将其关联到另一条问题；该报告没有证明安装目录中的脚本本身缺失。
 - [CLI-Anything #331](https://github.com/HKUDS/CLI-Anything/issues/331) 报告安装器只复制 Skill 目录，没有复制它引用的方法文档。
 - [Vercel Skills #1851](https://github.com/vercel-labs/skills/issues/1851) 报告全局安装显示成功，但 Skill 被写入共享目录，没有进入 Antigravity CLI 文档所列的全局目录。
 
 格式校验本身未必能发现这类问题。[一份复现记录](https://tinkerhood.com/learn/skill-references-and-assets/) 显示，格式校验通过时，Skill 引用的文件仍可能缺失。本工具直接检查源目录和实际安装目录。
+
+还有一类相关问题不在本工具的检查范围内：[Microsoft APM #2966](https://github.com/microsoft/apm/issues/2966) 报告资源**已经安装**，但生成的 Codex Agent TOML 文件保留了相对于旧位置的链接。`check` 读取 Skill 文件夹中的 Markdown，不检查生成的 Agent TOML，也不证明 Agent 运行时如何解析链接。
 
 结构检查与安全扫描仍然有用。这个工具只补一个检查环节：对比你准备发布的源 Skill 和用户实际安装到的目录。
 
