@@ -56,3 +56,4 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node web-tests/browser.mjs
       - run: node web-tests/diff-browser.mjs
+      - run: node web-tests/zip-browser.mjs

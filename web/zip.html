@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; form-action 'none'; object-src 'none'; base-uri 'none'"><title>Review a Skill ZIP | Skill Bundle Check</title><link rel="stylesheet" href="./style.css"></head>
+<body><main class="shell">
+<header><a href="https://github.com/LydiaTools/skill-bundle-check" class="brand">Skill Bundle Check</a><button id="language" class="language" type="button">中文</button></header>
+<section class="heading"><h1 data-key="heading">Review a Skill ZIP</h1><p data-key="intro">Choose a ZIP to check its structure before uploading one Skill.</p></section>
+<div class="layout"><section class="panel"><div class="panel-head"><h2 data-key="chooseHeading">Choose a ZIP</h2></div>
+<div class="actions"><label class="file-button"><span data-key="choose">Choose ZIP</span><input id="archive" aria-label="Choose ZIP" type="file" accept=".zip,application/zip"></label><button id="example" class="secondary" type="button" data-key="example">Try fictional example</button></div>
+<p id="filename" class="subtle" aria-live="polite" data-key="none">No file selected.</p>
+<p class="note" data-key="privacy">The selected file stays in this browser tab.</p></section>
+<section class="panel"><div class="panel-head"><h2 data-key="results">Results</h2><span class="count" id="count">—</span></div>
+<p id="summary" class="summary" aria-live="polite" data-key="empty">Choose a ZIP to begin.</p><ol id="results"></ol>
+<p class="note" data-key="scope">Checks ZIP directory metadata only. It does not read file contents, validate YAML or prove that an upload will succeed.</p></section></div>
+<footer><p data-key="limits">Single-Skill ZIPs only. Maximum 64 MiB and 5,000 entries. ZIP64 and some ZIP formats are unsupported.</p><a id="other" href="./diff.html" data-key="other">Compare Skill folders</a></footer>
+</main><script type="module" src="./zip.js"></script></body></html>

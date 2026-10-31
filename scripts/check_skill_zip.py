@@ -35,14 +35,18 @@ def directory_preflight(handle):
     # Find an EOCD whose declared comment ends exactly at EOF. Do not mistake a
     # signature inside the ZIP comment for the directory record.
     pos = len(tail)
+    candidates = []
     while True:
         pos = tail.rfind(b'PK\x05\x06', 0, pos)
         if pos < 0:
-            raise CannotInspect('ZIP end record not found or has trailing data.')
+            break
         if pos + EOCD.size <= len(tail):
             fields = EOCD.unpack_from(tail, pos)
             if pos + EOCD.size + fields[-1] == len(tail):
-                break
+                candidates.append((pos, fields))
+    if len(candidates) != 1:
+        raise CannotInspect('ZIP end record missing or ambiguous, or has trailing data.')
+    pos, fields = candidates[0]
     _, disk, directory_disk, disk_entries, entries, directory_size, directory_offset, _ = fields
     # Python's zipfile uses the last signature, even when it is in a comment.
     # Reject that unusual case explicitly instead of misreading its directory.
