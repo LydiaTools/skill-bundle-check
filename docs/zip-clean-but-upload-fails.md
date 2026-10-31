@@ -16,4 +16,4 @@ One example: [Prompt Master issue #19](https://github.com/nidhinjs/prompt-master
 
 Skill Bundle Check does not modify ZIPs or Skill content. A clean metadata result is not a security, YAML, content-integrity, or platform-acceptance verdict.
 
-The current online ZIP checker offers a Claude-specific hint when the sole entrypoint is exactly `SKILL.md` at the ZIP root. It does not validate the rest of the folder layout or upload the file. The fixed v0.14.1 download does not include this online hint.
+The ZIP checker offers a Claude-specific hint when the sole entrypoint is exactly `SKILL.md` at the ZIP root. It does not validate the rest of the folder layout or upload the file. The v0.14.2 package includes the hint; the fixed v0.14.1 package does not.
