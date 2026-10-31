@@ -4,7 +4,7 @@
 
 [在线对比 Skill 文件夹](https://lydiatools.github.io/skill-bundle-check/web/diff.html?lang=zh) · [检查 Markdown 表格](https://lydiatools.github.io/skill-bundle-check/web/?lang=zh) · [English](README.md)
 
-Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个指定目录的文件内容。`review-pipes` 提示人工检查部分 Markdown 表格转义。
+Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个指定目录的文件内容。`review-pipes` 提示人工检查部分 Markdown 表格转义；`review-shell` 提示复核部分 Shell 示例中的脚本路径。
 
 它不会运行 Skill、启动 Agent，也不会声称 Agent 已在运行时加载了 Skill。
 
@@ -94,6 +94,19 @@ node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope 
 ```
 
 此命令会按预期以退出码 1 结束，并报告 `probe-skill` 只在共享 `.agents/skills` 目录，没有出现在 Antigravity CLI 文档中的全局目录。不会启动 Agent。
+
+## 复核 Shell 示例里的脚本路径
+
+有时审计在错误目录找脚本，就会把实际存在的文件误报为缺失。[HashiCorp 的一条问题](https://github.com/hashicorp/agent-skills/issues/56)后来在评论中被指出属于这种误报。我们核对的历史仓库快照中，该脚本确实存在于 Skill 目录下；当前 `main` 可能已变化。
+
+常规 `check` 会跳过代码块。可以用下面独立的非阻断检查，复核**源目录根部 SKILL.md** 中部分 `./scripts/` 命令在两个目录根部的状态：
+
+```bash
+node src/cli.js review-shell ./examples/shell-source ./examples/shell-installed
+node src/cli.js review-shell ./skills/my-skill ~/.agents/skills/my-skill --format json
+```
+
+随包虚构例子会显示源目录有文件、安装目录缺少文件。这只是相对两个目录根部的观察，**不代表命令一定有问题**：实际执行目录可能不同。检查仅覆盖标明 Shell 语言的代码块中，直接运行的简单 `./scripts/` 路径，以及由 `sh`、`bash`、`zsh`、`python`、`python3` 或 `node` 调用的同类路径；不解析 Shell、不读取其他 Markdown、不执行命令，也不证明文件内容或 Agent 运行情况。可能漏报或多报，最多显示 1,000 条并标明截断。有提示时退出码为 0，输入无效或不可读时为 2；请结合实际执行目录人工判断。
 
 ## 试一次虚构的更新
 
