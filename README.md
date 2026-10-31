@@ -10,6 +10,8 @@ Not sure where a Skill was installed or whether its copy changed? [Follow the pr
 
 Uploading one Skill as a ZIP? [Review its structure in your browser](https://lydiatools.github.io/skill-bundle-check/web/zip.html) or [use Python](#review-a-single-skill-zip).
 
+Installing a same-name Skill? [Check the destination first](#check-a-destination-before-installing).
+
 Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares two Skill folders; `diff-tree` compares larger selected directory trees, including plugin files outside a Skill folder. `review-pipes` points out certain Markdown table escapes; `review-shell` highlights selected script paths in shell examples. Both provide hints for human review.
 
 It does not run the skill, start the agent, or claim that the agent loaded it at runtime.
@@ -102,6 +104,20 @@ node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope 
 ```
 
 The command intentionally exits with code 1 and reports that `probe-skill` exists under the shared `.agents/skills` root, not Antigravity CLI's documented global root. No agent is launched.
+
+## Check a destination before installing
+
+Two different Skills can have the same name. The UI-design Skill [unslop](https://github.com/heydamir/unslop/issues/3) and a writing Skill share one; an [open install PR](https://github.com/heydamir/unslop/pull/5) describes how a recursive copy can overwrite files in an existing destination. In an isolated macOS test, copying two fictional same-name Skill folders replaced the first `SKILL.md`.
+
+Before copying, inspect the **exact destination path** your installer will use:
+
+```sh
+node src/cli.js check-target "$HOME/.claude/skills/unslop"
+```
+
+`PRESENT` means that path currently exists, even if it is an empty directory or a dangling symbolic link: inspect it before proceeding. `MISSING` means the first missing component was absent at the moment of inspection; `UNAVAILABLE` means the tool could not check it, for example because a parent is a broken link or not a directory. Exit codes are `1`, `0`, and `2` respectively. Add `--format json` for structured output.
+
+This is a read-only snapshot, not a reservation, an installer simulation, a backup, or a guarantee that a later copy is safe. Confirm the actual destination, inspect existing files, and keep a backup before replacing anything. Paths in the output can contain personal information. Behavior differs by installer, shell, filesystem and timing.
 
 ## Review a single-Skill ZIP
 
