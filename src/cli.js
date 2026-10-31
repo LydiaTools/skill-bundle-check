@@ -6,6 +6,7 @@ import { diffContent } from './content-diff.js';
 import { inspectMarkdown } from './review-pipes.js';
 import { checkAgentPath, getAgentProfiles } from './agent-path.js';
 import { checkBundle } from './check.js';
+import { reviewShell } from './review-shell.js';
 
 const HELP = `skill-bundle-check — verify links survive a real skill install
 
@@ -16,6 +17,7 @@ Usage:
   skill-bundle-check compare <before.json> <after.json>
   skill-bundle-check diff <source-skill-dir> <installed-skill-dir> [--format text|json]
   skill-bundle-check review-pipes <markdown-file> [--format text|json]
+  skill-bundle-check review-shell <source-skill-dir> <installed-skill-dir> [--format text|json]
 
 Example:
   skill-bundle-check check ./skills/my-skill ~/.agents/skills/my-skill
@@ -25,6 +27,7 @@ Example:
 check reads both bundle directories. check-agent looks for SKILL.md at the documented location.
 All checks are read-only; none runs nor installs a skill.
 review-pipes offers non-blocking review hints for escaped pipes in inline code within ordinary Markdown tables.
+review-shell offers non-blocking hints for selected ./scripts/ commands in source SKILL.md shell fences.
 Snapshot and compare output JSON with paths; exit 0 if all targets are found, 1 for a missing/broken target, 2 for unavailable input.
 diff exits 0 for matching files, 1 for differences, and 2 when comparison cannot complete.
 For Codex global checks, --codex-home overrides CODEX_HOME; --home isolates the default home.
@@ -53,6 +56,7 @@ async function main(argv) {
 		return result.changes.length ? 1 : 0;
 	}
 	if (command === 'review-pipes') return await runPipeReview(args);
+	if (command === 'review-shell') return await runShellReview(args);
 	console.error(HELP);
 	return 2;
 	}
@@ -75,6 +79,17 @@ async function runPipeReview(args) {
     console.log(`\n${findings.length} occurrence(s) to review${truncated ? ' (output truncated; further matches exist)' : ''}. Escapes can be intentional; no command was run or changed.`);
   }
   return 0; // These are review hints, not established failures.
+}
+
+async function runShellReview(args) {
+  if (![2,4].includes(args.length) || (args.length === 4 && (args[2] !== '--format' || !['text','json'].includes(args[3])))) throw new Error('Use review-shell <source-skill-dir> <installed-skill-dir> [--format text|json]');
+  const result = await reviewShell(args[0], args[1]);
+  if (args[3] === 'json') console.log(JSON.stringify(result, null, 2));
+  else {
+    for (const item of result.findings) console.log(`REVIEW  SKILL.md:${item.line}  ${item.commandPath}  source-root=${item.sourceRoot}  installed-root=${item.installedRoot}`);
+    console.log(`\n${result.findings.length} command path(s) to review${result.truncated ? ' (truncated)' : ''}. Paths may use a different working directory; no commands were run.`);
+  }
+  return 0;
 }
 
 async function runPresenceSnapshot(args) {

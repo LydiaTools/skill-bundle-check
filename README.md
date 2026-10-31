@@ -4,7 +4,7 @@
 
 [Compare Skill folders online](https://lydiatools.github.io/skill-bundle-check/web/diff.html) · [Review Markdown tables](https://lydiatools.github.io/skill-bundle-check/web/) · [中文说明](README.zh-CN.md)
 
-Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares file bytes between two explicitly selected skill folders. `review-pipes` points out certain Markdown table escapes for human review.
+Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares file bytes between two explicitly selected skill folders. `review-pipes` points out certain Markdown table escapes; `review-shell` highlights selected script paths in shell examples. Both provide hints for human review.
 
 It does not run the skill, start the agent, or claim that the agent loaded it at runtime.
 
@@ -121,6 +121,19 @@ node src/cli.js review-pipes /path/to/SKILL.md --format json
 ```
 
 The fictional example gives two **review hints**, including a deliberately literal extended-regex pipe. Results name the file and 1-based line and UTF-16 column of the backslash. Hints exit 0; unreadable files or invalid input exit 2. This approximate scan covers inline code on ordinary single-line pipe-table rows; it is not a full Markdown or shell parser and can miss or over-report cases. Output stops at 1,000 hints and explicitly reports truncation when more exist. An escape can be correct (for example GNU basic-regex alternation), and a clean scan does not prove commands work. It never runs, interprets or changes a command. Check each result in context; a fenced code block outside a table can make commands easier to inspect in raw and rendered views.
+
+## Review script paths in shell examples
+
+An audit can look in the wrong directory and report a missing script that is actually present. A [HashiCorp issue](https://github.com/hashicorp/agent-skills/issues/56) was later identified in its comments as such a false positive. In the repository snapshot we checked, the referenced script existed relative to the skill folder. The current `main` may differ.
+
+The regular `check` deliberately skips fenced code. Use this separate, non-blocking review to compare selected `./scripts/` command paths in the **source root SKILL.md** against both folder roots:
+
+```bash
+node src/cli.js review-shell ./examples/shell-source ./examples/shell-installed
+node src/cli.js review-shell ./skills/my-skill ~/.agents/skills/my-skill --format json
+```
+
+The included fictional example reports `source-root=file` and `installed-root=missing`. These are root-relative file observations, **not a verdict that the command is broken**: the instructions may intend a different working directory. The scan recognizes direct commands and `sh`, `bash`, `zsh`, `python`, `python3` or `node` invocations on simple `./scripts/` paths in labeled shell fences only. It does not parse shell, inspect other Markdown files, run the command, establish file integrity, or prove agent execution. It can miss or over-report candidates; at most 1,000 hints are returned, with truncation flagged. Hints exit 0; invalid or unreadable input exits 2. Verify the intended working directory and command before drawing a conclusion.
 
 ## Compare installations before and after an update
 
