@@ -49,14 +49,15 @@ async function inventory(root) {
   await walk(root);
   return files;
 }
-export async function diffContent(sourceInput, installedInput) {
+export async function diffContent(sourceInput, installedInput, { requireSkill = true } = {}) {
   const source = await rootDirectory(sourceInput), installed = await rootDirectory(installedInput);
   if (inside(source,installed) || inside(installed,source)) throw new Error('Source and installed directories must be separate and non-overlapping');
   const a=await inventory(source), b=await inventory(installed), changes=[];
-  if (!a.has('SKILL.md') || !b.has('SKILL.md')) throw new Error('Both directories must contain a regular SKILL.md at the root');
+  if (requireSkill && (!a.has('SKILL.md') || !b.has('SKILL.md'))) throw new Error('Both directories must contain a regular SKILL.md at the root');
+  if (!requireSkill && a.size === 0) throw new Error('Source directory must contain at least one regular file');
   for (const name of [...new Set([...a.keys(),...b.keys()])].sort()) {
     const sourceHash=a.get(name) ?? null, installedHash=b.get(name) ?? null;
     if (sourceHash !== installedHash) changes.push({path:name,status:sourceHash===null?'installed-only':installedHash===null?'source-only':'changed',source_sha256:sourceHash,installed_sha256:installedHash});
   }
-  return {schema:'skill-content-diff-v1',files_source:a.size,files_installed:b.size,changes};
+  return {schema:requireSkill?'skill-content-diff-v1':'directory-content-diff-v1',files_source:a.size,files_installed:b.size,changes};
 }

@@ -4,7 +4,9 @@
 
 [Compare Skill folders online](https://lydiatools.github.io/skill-bundle-check/web/diff.html) · [Review Markdown tables](https://lydiatools.github.io/skill-bundle-check/web/) · [中文说明](README.zh-CN.md)
 
-Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares file bytes between two explicitly selected skill folders. `review-pipes` points out certain Markdown table escapes; `review-shell` highlights selected script paths in shell examples. Both provide hints for human review.
+Using a Skill inside a plugin? [Check the surrounding plugin files](#plugin-tree).
+
+Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares two Skill folders; `diff-tree` compares larger selected directory trees, including plugin files outside a Skill folder. `review-pipes` points out certain Markdown table escapes; `review-shell` highlights selected script paths in shell examples. Both provide hints for human review.
 
 It does not run the skill, start the agent, or claim that the agent loaded it at runtime.
 
@@ -173,6 +175,19 @@ For example, in an isolated test with `skills@1.7.4`, a local skill installed wi
 This read-only command lists differing relative paths and whether each was added, removed or changed. Add `--format json` to include SHA-256 values for CI. Exit 0 means the compared file bytes matched; 1 means differences; 2 means the check could not complete. It does not output file contents, select the authoritative copy, determine what the agent loaded, or update either folder. This is a snapshot: do not edit the trees during comparison. Empty directory-only changes are not compared.
 
 Both roots must be separate, non-overlapping existing directories with a regular `SKILL.md` at each root. Inner symbolic links and special files are refused; a root itself may resolve through a symlink. The scan stops rather than report a partial match above 2,000 entries, 8 MiB per file or 64 MiB total per directory. This is not an atomic security boundary against concurrent hostile filesystem changes. Check actual installed paths and output before sharing.
+
+<a id="plugin-tree"></a>
+## When a Skill is part of a plugin
+
+The Skill file can match while the plugin around it is missing. In [Vercel Skills #2609](https://github.com/vercel-labs/skills/issues/2609), a user reports an installation that copies a nested Skill without the enclosing Claude Code plugin metadata and hooks. In our isolated macOS test with `skills@1.7.4` and a fictional plugin, comparing just the nested Skill returned a match; comparing the selected plugin source with the installed Skill revealed the missing relative paths.
+
+Try a fictional version of that comparison:
+
+```bash
+node src/cli.js diff-tree ./examples/plugin-source ./examples/plugin-installed
+```
+
+The example reports `.claude-plugin/plugin.json` and `hooks/hooks.json` as source-only, along with paths that differ because the Skill was moved; exit 1 is expected. For your own package, select the actual source plugin root and the actual installed folder you want to compare. Both directories must exist; the source must contain at least one regular file. Relative paths must have the same layout for a byte-for-byte match; an intentional reorganization also appears as differences. `diff-tree` uses the same read limits and exit codes as `diff`, but does not require `SKILL.md` at either root. It compares files, not empty directories, and does not prove plugin loading, hook execution or that a chosen path is correct.
 
 ## GitHub Actions
 

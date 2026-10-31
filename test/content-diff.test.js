@@ -7,6 +7,7 @@ import os from 'node:os';import path from 'node:path';
 const cli=fileURLToPath(new URL('../src/cli.js', import.meta.url));
 async function fixture(fn){const d=await mkdtemp(path.join(os.tmpdir(),'skill-diff-'));try{const a=path.join(d,'source'),b=path.join(d,'installed');await mkdir(a);await mkdir(b);await fn({a,b,d});}finally{await rm(d,{recursive:true,force:true})}}
 function run(...args){return spawnSync(process.execPath,[cli,'diff',...args],{encoding:'utf8'})}
+function runTree(...args){return spawnSync(process.execPath,[cli,'diff-tree',...args],{encoding:'utf8'})}
 test('changed, added and removed binary/text files; do not disclose content',async()=>fixture(async({a,b})=>{
  await mkdir(path.join(a,'references'));await mkdir(path.join(b,'references'));
  await writeFile(path.join(a,'SKILL.md'),'PRIVATE-source');await writeFile(path.join(b,'SKILL.md'),'PRIVATE-old');
@@ -30,4 +31,19 @@ test('entry cap fails closed instead of treating a partial comparison as a match
 test('empty or wrong directories are not reported as a successful Skill comparison',async()=>fixture(async({a,b})=>{
  let r=run(a,b);assert.equal(r.status,2);assert.match(r.stderr,/SKILL\.md/);assert.equal(r.stdout,'');
  await writeFile(path.join(a,'SKILL.md'),'# source');r=run(a,b);assert.equal(r.status,2);assert.match(r.stderr,/SKILL\.md/);
+}));
+
+test('compare plugin root and installed skill without masking missing plugin metadata',async()=>fixture(async({a,b})=>{
+ await mkdir(path.join(a,'.claude-plugin'));await mkdir(path.join(a,'hooks'));await mkdir(path.join(a,'skills','example'),{recursive:true});
+ await writeFile(path.join(a,'.claude-plugin','plugin.json'),'{"name":"example"}');await writeFile(path.join(a,'hooks','hooks.json'),'{"hooks":{}}');
+ await writeFile(path.join(a,'skills','example','SKILL.md'),'# Example');await writeFile(path.join(b,'SKILL.md'),'# Example');
+ assert.equal(run(path.join(a,'skills','example'),b).status,0);
+ assert.equal(run(a,b).status,2);
+ const r=runTree(a,b,'--format','json');assert.equal(r.status,1);
+ const j=JSON.parse(r.stdout);assert.equal(j.schema,'directory-content-diff-v1');
+ assert.deepEqual(j.changes.map(x=>[x.path,x.status]),[['.claude-plugin/plugin.json','source-only'],['SKILL.md','installed-only'],['hooks/hooks.json','source-only'],['skills/example/SKILL.md','source-only']]);
+}));
+test('tree comparison rejects an empty source and reports an empty installed tree',async()=>fixture(async({a,b})=>{
+ assert.equal(runTree(a,b).status,2);await writeFile(path.join(a,'plugin.json'),'{}');assert.equal(runTree(a,b).status,1);
+ await writeFile(path.join(b,'plugin.json'),'{}');assert.equal(runTree(a,b).status,0);
 }));
