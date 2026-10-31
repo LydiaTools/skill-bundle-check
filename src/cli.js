@@ -7,12 +7,14 @@ import { inspectMarkdown } from './review-pipes.js';
 import { checkAgentPath, getAgentProfiles } from './agent-path.js';
 import { checkBundle } from './check.js';
 import { reviewShell } from './review-shell.js';
+import { inspectInstallTarget } from './install-target.js';
 
 const HELP = `skill-bundle-check — verify links survive a real skill install
 
 Usage:
   skill-bundle-check check <source-skill-dir> <installed-skill-dir> [--format text|json]
   skill-bundle-check check-agent --skill <name> --scope global|project (--agent <id> | --root <path>) [options]
+  skill-bundle-check check-target <destination-path> [--format text|json]
   skill-bundle-check snapshot <skill> <label=skills-root> [label=skills-root ...]
   skill-bundle-check compare <before.json> <after.json>
   skill-bundle-check diff <source-skill-dir> <installed-skill-dir> [--format text|json]
@@ -26,6 +28,7 @@ Example:
   skill-bundle-check check-agent --root ./custom-agent/skills --skill my-skill --scope global
 
 check reads both bundle directories. check-agent looks for SKILL.md at the documented location.
+check-target observes one explicit destination path; it does not reserve it or decide whether an installer will overwrite files.
 All checks are read-only; none runs nor installs a skill.
 review-pipes offers non-blocking review hints for escaped pipes in inline code within ordinary Markdown tables.
 review-shell offers non-blocking hints for selected ./scripts/ commands in source SKILL.md shell fences.
@@ -45,6 +48,7 @@ async function main(argv) {
 	const [command, ...args] = argv;
 	if (command === 'check') return await runBundleCheck(args);
 	if (command === 'check-agent') return await runAgentCheck(args);
+	if (command === 'check-target') return await runTargetCheck(args);
 	if (command === 'snapshot') return await runPresenceSnapshot(args);
 	if (command === 'compare') return await runPresenceCompare(args);
 	if (command === 'diff' || command === 'diff-tree') {
@@ -81,6 +85,19 @@ async function runPipeReview(args) {
     console.log(`\n${findings.length} occurrence(s) to review${truncated ? ' (output truncated; further matches exist)' : ''}. Escapes can be intentional; no command was run or changed.`);
   }
   return 0; // These are review hints, not established failures.
+}
+
+async function runTargetCheck(args) {
+  if (![1,3].includes(args.length) || (args.length === 3 && (args[1] !== '--format' || !['text','json'].includes(args[2])))) throw new Error('Use check-target <destination-path> [--format text|json]');
+  const result = await inspectInstallTarget(args[0]);
+  if (args[2] === 'json') console.log(JSON.stringify(result, null, 2));
+  else {
+    console.log(`${result.status.toUpperCase()}  ${JSON.stringify(result.target)}${result.kind ? ` (${result.kind})` : ''}`);
+    if (result.status === 'missing') console.log(`First missing path: ${JSON.stringify(result.first_missing)}. This is a snapshot, not a guarantee about an install.`);
+    if (result.status === 'unavailable') console.log(`Cannot inspect ${JSON.stringify(result.at)} (${result.code}).`);
+    if (result.status === 'present') console.log('Inspect the existing path before copying or installing.');
+  }
+  return result.status === 'missing' ? 0 : result.status === 'present' ? 1 : 2;
 }
 
 async function runShellReview(args) {

@@ -10,6 +10,8 @@ Skill 包含在插件中？[检查外层插件文件](#plugin-tree)。
 
 需要上传单个 Skill 的 ZIP？可[在浏览器检查结构](https://lydiatools.github.io/skill-bundle-check/web/zip.html?lang=zh)，也可[用 Python 检查](#检查单个-skill-zip)。
 
+准备安装同名 Skill？先[检查目标路径](#安装前检查目标路径)。
+
 Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个 Skill 文件夹，`diff-tree` 对比更大的指定目录，包含 Skill 外层的插件文件。`review-pipes` 提示人工检查部分 Markdown 表格转义；`review-shell` 提示复核部分 Shell 示例中的脚本路径。
 
 它不会运行 Skill、启动 Agent，也不会声称 Agent 已在运行时加载了 Skill。
@@ -102,6 +104,20 @@ node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope 
 ```
 
 此命令会按预期以退出码 1 结束，并报告 `probe-skill` 只在共享 `.agents/skills` 目录，没有出现在 Antigravity CLI 文档中的全局目录。不会启动 Agent。
+
+## 安装前检查目标路径
+
+两个不同的 Skill 可能同名。[界面设计 Skill unslop 的 Issue](https://github.com/heydamir/unslop/issues/3) 提到了它与写作 Skill 同名；一个[尚在审核的安装说明 PR](https://github.com/heydamir/unslop/pull/5) 描述了递归复制时覆盖现有文件的情况。我们在 macOS 隔离目录中用两个虚构同名 Skill 测试，也观察到后复制的 `SKILL.md` 替换了原文件。
+
+复制前，先核对安装器实际要使用的**确切目标路径**：
+
+```sh
+node src/cli.js check-target "$HOME/.claude/skills/unslop"
+```
+
+`PRESENT` 表示路径当前已存在，包括空文件夹或失效符号链接，应先检查；`MISSING` 表示检查时某个路径部分不存在；`UNAVAILABLE` 表示无法确认，例如上级是失效链接或不是文件夹。三者退出码分别为 `1`、`0`、`2`；添加 `--format json` 可输出结构化结果。
+
+这是只读的瞬时检查，不会锁定路径、模拟安装、备份文件或保证后续复制安全。请确认实际目标，检查已有文件，在替换前做好备份。输出的路径可能包含个人信息。结果也会受安装器、Shell、文件系统和检查时机影响。
 
 ## 检查单个 Skill ZIP
 

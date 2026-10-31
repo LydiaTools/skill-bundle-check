@@ -44,6 +44,15 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: python -m unittest discover -s test -p 'test_skill_zip.py' -v
 
+  install-target-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: node --test test/install-target.test.js
+
   web-browser:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
