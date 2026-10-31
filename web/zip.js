@@ -7,6 +7,11 @@ const strings={
 strings.en.example='Try fictional example';strings.en.exampleName='Fictional example';
 strings.zh.example='试用虚构示例';strings.zh.exampleName='虚构示例';
 strings.en.guide='ZIP looks clean but upload fails?';strings.zh.guide='结构正常但仍上传失败？';
+strings.en.rootHint='For Claude web or desktop uploads, place SKILL.md and its supporting files inside one top-level Skill folder before zipping.';
+strings.zh.rootHint='如果上传到 Claude 网页版或桌面版，请先把 SKILL.md 和配套文件放进一个顶层 Skill 文件夹，再压缩该文件夹。';
+strings.en.rootSource='Claude packaging instructions';strings.zh.rootSource='Claude 官方打包说明';
+strings.en.rootSummary='No general findings. Check the folder layout below for Claude.';
+strings.zh.rootSummary='通用检查未发现问题；上传 Claude 前请检查下方目录提示。';
 const exampleZip='UEsDBBQAAAgAAAAAAAAAAAAAAAAAAAAAAAAQAAAAZXhhbXBsZS9TS0lMTC5tZFBLAwQUAAAIAAAAAAAAAAAAAAAAAAAAAAAAFgAAAGV4YW1wbGUvYWxpYXMvU0tJTEwubWRQSwECFAMUAAAIAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAApIEAAAAAZXhhbXBsZS9TS0lMTC5tZFBLAQIUAxQAAAgAAAAAAAAAAAAAAAAAAAAAAAAWAAAAAAAAAAAAAAD/oS4AAABleGFtcGxlL2FsaWFzL1NLSUxMLm1kUEsFBgAAAAACAAIAggAAAGIAAAAAAA==';
 let lang=new URLSearchParams(location.search).get('lang')==='zh'?'zh':'en', result=null, error='', working=false, selected='', sample=false, revision=0;
 const t=()=>strings[lang];
@@ -18,8 +23,10 @@ function render(){
  document.querySelectorAll('[data-key]').forEach(el=>el.textContent=t()[el.dataset.key]);
  $('language').textContent=lang==='en'?'中文':'English';$('archive').setAttribute('aria-label',t().choose);
  $('filename').textContent=sample?t().exampleName:selected?safe(selected):t().none;$('other').href=lang==='zh'?'./diff.html?lang=zh':'./diff.html';$('guide').href='https://github.com/LydiaTools/skill-bundle-check/blob/main/docs/zip-clean-but-upload-fails'+(lang==='zh'?'.zh-CN':'')+'.md';
- $('count').textContent=result?String(result.findingCount):'—';$('results').replaceChildren();
- $('summary').textContent=working?t().working:error?t()[error]:result?(result.status==='ok'?t().ok:t().review(result.findingCount)):t().empty;
+ const rootEntry=result?.skillCount===1&&result.skillFiles[0]==='SKILL.md';
+ $('count').textContent=result?(String(result.findingCount)+(rootEntry?(lang==='zh'?' + 提示':' + hint'):'')):'—';$('results').replaceChildren();
+ $('root-hint').hidden=!rootEntry;
+ $('summary').textContent=working?t().working:error?t()[error]:result?(result.status==='ok'?(rootEntry?t().rootSummary:t().ok):t().review(result.findingCount)):t().empty;
  if(!result)return;
  const add=text=>{const li=document.createElement('li');li.className='diff-row';li.textContent=text;$('results').append(li)};
  for(const path of result.skillFiles)add(t().skill+' · '+safe(path));

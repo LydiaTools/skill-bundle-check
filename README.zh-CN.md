@@ -121,6 +121,8 @@ node src/cli.js check-target "$HOME/.claude/skills/unslop"
 
 ## 检查单个 Skill ZIP
 
+如果唯一的 `SKILL.md` 直接位于 ZIP 根目录，在线检查会向 Claude 网页版和桌面版用户提示顶层文件夹的要求。该提示不检查其余目录结构，也不验证上传结果；固定的 v0.14.1 下载包尚不含此提示。
+
 上传 ZIP 失败时，可先[在浏览器选择文件](https://lydiatools.github.io/skill-bundle-check/web/zip.html?lang=zh)。文件留在当前标签页，只读取 ZIP 目录信息。网页版支持 UTF-8 和 ASCII 文件名，暂不支持旧式非 ASCII 编码和 Unicode Path 扩展字段。
 
 ![浏览器 ZIP 检查界面：标注为虚构示例的压缩包显示两个入口文件和一个符号链接](docs/assets/zip-review-zh.png)
