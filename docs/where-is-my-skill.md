@@ -35,6 +35,12 @@ Want to see the result before selecting your own files? Run `node examples/diff-
 
 If a Skill is nested in a plugin, a Skill-only comparison can miss the files around it. See [plugin tree comparison](../README.md#plugin-tree).
 
+### When “up to date” is not enough
+
+A [report against the `skills` installer](https://github.com/vercel-labs/skills/issues/2327) describes an installed snapshot lagging behind the GitHub revision recorded in its lockfile. An [upstream fix](https://github.com/vercel-labs/skills/pull/2354) is under review. We have not reproduced that timing-dependent installer issue; its status and affected versions may change.
+
+If you need to investigate your own installation, obtain a trusted checkout of the exact repository and revision you intended to install. Record its commit with `git rev-parse HEAD`, find the actual installed folder as in step 1, then compare the matching Skill folders. Review each difference before changing anything. A difference shows that the selected files are not identical; it does not establish the cause, whether an update is available, or which copy the agent used. A match covers the files actually compared, not lockfile integrity or runtime loading.
+
 ## 3. Decide what to update
 
 If the copies differ, first decide which folder is meant to be authoritative and inspect the changes. The installer has [update commands](https://github.com/vercel-labs/skills/blob/v1.7.4/docs/commands.md); updating can change installed files. A source installed from a local path may need different handling from a GitHub source.

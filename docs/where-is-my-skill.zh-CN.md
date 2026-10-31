@@ -35,6 +35,12 @@ node src/cli.js diff "/path/to/source-skill" "/path/to/installed-skill"
 
 Skill 如果嵌在插件里，只对比 Skill 可能漏掉外层文件；参见[插件目录对比](../README.zh-CN.md#plugin-tree)。
 
+### 显示“已是最新版”，还需要检查什么？
+
+有人在 [`skills` 安装器的问题报告](https://github.com/vercel-labs/skills/issues/2327)中描述：安装得到的快照可能落后于锁文件记录的 GitHub 版本。对应的[上游修复](https://github.com/vercel-labs/skills/pull/2354)正在审核。我们没有复现这个依赖时机的问题；处理状态和受影响版本可能变化。
+
+如果你想检查自己的安装，先取得你原本想安装的仓库和确切版本的可信源码副本，用 `git rev-parse HEAD` 记录其提交；按第一步找到实际安装目录，再对比对应的两个 Skill 文件夹。修改前逐项检查差异。发现不同只能说明所选文件不一致，不能直接确定原因、是否有可用更新，或 Agent 实际使用了哪个副本；显示一致也只覆盖实际参与对比的文件，不代表锁文件和运行时加载均已验证。
+
 ## 3. 决定是否更新
 
 如果发现差异，先确认哪个文件夹才是你要保留的版本，再检查变化。安装器提供[更新命令](https://github.com/vercel-labs/skills/blob/v1.7.4/docs/commands.md)，更新可能改变已安装文件；本地路径来源和 GitHub 来源的处理方式也可能不同。
