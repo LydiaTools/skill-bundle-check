@@ -25,7 +25,7 @@ Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地�
 社区里已经出现多种 Skill 安装后引用失效的问题：
 
 - [Agent-Reach](https://github.com/Panniantong/Agent-Reach/issues/622)、[Hallmark](https://github.com/Nutlope/hallmark/issues/76) 和 [Tastemaker](https://github.com/codeswithroh/tastemaker/issues/86) 报告过安装或转换后无法取得所引用资源的情况。
-- [Addy Osmani 的 agent-skills #468](https://github.com/addyosmani/agent-skills/issues/468) 曾报告完整安装插件后共享文件的相对链接无法解析；[#469](https://github.com/addyosmani/agent-skills/pull/469) 已修复这些链接。[#597](https://github.com/addyosmani/agent-skills/issues/597) 则报告了只安装单个 Skill 时的另一个问题。
+- [Addy Osmani 的 agent-skills #468](https://github.com/addyosmani/agent-skills/issues/468) 曾报告完整安装插件后共享文件的相对链接无法解析；[#469](https://github.com/addyosmani/agent-skills/pull/469) 已修复这些链接。[#597](https://github.com/addyosmani/agent-skills/issues/597) 则报告了只安装单个 Skill 时的另一个问题。 查看[单个 Skill 安装案例与复现步骤](docs/case-single-skill-install.zh-CN.md)。
 - [OpenAI Codex #8364](https://github.com/openai/codex/issues/8364) 报告 Agent 有时找不到引用的脚本，维护者将其关联到另一条问题；该报告没有证明安装目录中的脚本本身缺失。
 - [CLI-Anything #331](https://github.com/HKUDS/CLI-Anything/issues/331) 报告安装器只复制 Skill 目录，没有复制它引用的方法文档。
 - [Vercel Skills #1851](https://github.com/vercel-labs/skills/issues/1851) 报告全局安装显示成功，但 Skill 被写入共享目录，没有进入 Antigravity CLI 文档所列的全局目录。
