@@ -99,7 +99,7 @@ node src/cli.js check-agent --root ./custom-agent/skills --skill my-skill --scop
 
 目前内置了 `claude-code`、`codex-cli`、`antigravity-cli`、`antigravity-ide` 和 `antigravity-app` 路径，映射依据分别链接到 [Claude Code Skills 文档](https://code.claude.com/docs/en/skills)、[Codex Skills 文档](https://developers.openai.com/codex/skills/) 和 [Antigravity Skills 文档](https://www.antigravity.google/docs/skills)。项目级检查以当前工作目录代表的项目目录为准。目标目录缺少 Skill 时返回退出码 1；如果 Skill 只在 `~/.agents/skills`，报告会同时显示预期路径与实际找到的路径。Antigravity IDE 文档支持的旧路径也会识别。检查文件落点不等于确认 Agent 已在运行时加载或执行 Skill。
 
-如果预期路径中有失效的符号链接，`check-agent` 也会指出它的位置。[一个 Codex 问题](https://github.com/openai/codex/issues/11314)最终确认是相对链接指向错误；本检查只诊断路径，不证明 Agent 已加载。
+如果预期路径中有失效的符号链接，`check-agent` 也会指出它的位置。[一个 Codex 问题](https://github.com/openai/codex/issues/11314)最终确认是相对链接指向错误；本检查只诊断路径，不证明 Agent 已加载。 当目标路径存在且经过软链接时，工具会列出所选路径上的链接位置；这有助于排查发现问题，但不能证明 Agent 已加载。
 
 从 v0.4.0 起，Codex 全局检查同时查看 `~/.agents/skills` 和 `$CODEX_HOME/skills`（默认 `~/.codex/skills`），并列出找到的目录。可设置进程的 `CODEX_HOME`，也可用 `--codex-home /路径/到/codex-home` 指定；使用 `--home` 检查隔离样例时，默认 Codex 目录是该 home 下的 `.codex`。隔离环境中的原生 Codex app-server `skills/list` 测试在两个用户目录各发现了一个合成 Skill。文件存在仍不证明你正在使用的 Agent 已加载该 Skill；不同版本或配置可能不同。
 

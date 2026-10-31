@@ -221,6 +221,8 @@ function printAgentResult(result) {
 	console.log(`Expected: ${result.expectedEntry}`);
 	if (result.expectedPresent) {
 		console.log('FOUND  SKILL.md exists at the documented path.');
+		for (const link of result.symlinkPaths || []) console.log(`SYMLINK  ${link}`);
+		if (result.symlinkPaths?.length) console.log('File presence does not confirm that the agent discovers this Skill.');
 	} else {
 		console.log('NOT FOUND  SKILL.md is missing from the expected root shown above.');
 		if (result.brokenLink) console.log(`BROKEN LINK  ${result.brokenLink} points to a missing target.`);

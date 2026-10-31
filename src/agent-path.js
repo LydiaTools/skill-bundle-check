@@ -1,4 +1,4 @@
-import { stat } from 'node:fs/promises';
+import { lstat, stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { inspectPath } from './presence.js';
@@ -70,6 +70,8 @@ export async function checkAgentPath({ agent, skill, scope, root, home, codexHom
 	const entryPath = path.join(skillPath, 'SKILL.md');
 	const expectedPresent = await isFile(entryPath);
 	const pathDiagnostic = expectedPresent ? null : await inspectPath(entryPath);
+	const linkStart = root ? base : path.resolve(scope === 'global' ? userHome : cwd);
+	const symlinkPaths = expectedPresent ? await findPathLinks(linkStart, entryPath) : [];
 	const otherLocations = [];
 	if (agent === 'codex-cli' && scope === 'global') {
 		// An explicit home isolates test fixtures from the caller's CODEX_HOME.
@@ -112,6 +114,7 @@ export async function checkAgentPath({ agent, skill, scope, root, home, codexHom
 		expectedRoot: base,
 		expectedEntry: entryPath,
 		expectedPresent,
+		...(symlinkPaths.length ? { symlinkPaths } : {}),
 		...(pathDiagnostic?.status === 'broken-link' ? { brokenLink: pathDiagnostic.at } : {}),
 		status,
 		otherLocations,
@@ -126,4 +129,18 @@ async function isFile(filePath) {
 		if (error?.code === 'ENOENT' || error?.code === 'ENOTDIR') return false;
 		throw error;
 	}
+}
+
+// Report links on the selected lexical path without resolving or disclosing their targets.
+async function findPathLinks(start, entry) {
+	const relative = path.relative(start, entry);
+	if (relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) return [];
+	let current = start;
+	const links = [];
+	if ((await lstat(current)).isSymbolicLink()) links.push(current);
+	for (const part of relative.split(path.sep).filter(Boolean)) {
+		current = path.join(current, part);
+		if ((await lstat(current)).isSymbolicLink()) links.push(current);
+	}
+	return links;
 }

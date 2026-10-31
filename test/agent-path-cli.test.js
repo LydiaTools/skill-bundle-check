@@ -97,3 +97,52 @@ test('check-agent identifies a broken relative symlink while preserving a health
   const good=spawnSync(process.execPath,args,{encoding:'utf8'});
   assert.equal(good.status,0,good.stderr);assert.match(good.stdout,/FOUND/);assert.doesNotMatch(good.stdout,/BROKEN LINK/);
 });
+
+
+test('reports existing directory and file symlinks without claiming agent discovery', async (t) => {
+  const project = await mkdtemp(path.join(os.tmpdir(), 'skill-link-discovery-'));
+  temporaryDirectories.push(project);
+  const root = path.join(project, '.claude', 'skills');
+  const source = path.join(project, 'source');
+  await mkdir(root, {recursive:true});
+  await mkdir(source);
+  await writeFile(path.join(source, 'content.md'), '---\nname: probe-skill\ndescription: Synthetic.\n---\n');
+  try {
+    await symlink(source, path.join(root, 'probe-skill'), 'dir');
+    await symlink('content.md', path.join(source, 'SKILL.md'), 'file');
+  } catch (error) { if (process.platform === 'win32' && ['EPERM', 'EACCES'].includes(error.code)) return t.skip('Symlink privileges unavailable'); throw error; }
+  const args=[cliPath,'check-agent','--agent','claude-code','--scope','project','--skill','probe-skill','--cwd',project];
+  const text=spawnSync(process.execPath,args,{encoding:'utf8'});
+  assert.equal(text.status,0,text.stderr);
+  assert.match(text.stdout,/FOUND/);
+  assert.match(text.stdout,/SYMLINK/);
+  assert.match(text.stdout,/does not confirm/);
+  assert.ok(text.stdout.includes(path.join(root,'probe-skill')));
+  const json=spawnSync(process.execPath,[...args,'--format','json'],{encoding:'utf8'});
+  assert.equal(json.status,0,json.stderr);
+  assert.deepEqual(JSON.parse(json.stdout).symlinkPaths,[path.join(root,'probe-skill'),path.join(root,'probe-skill','SKILL.md')]);
+});
+
+
+test('reports a linked skills root and leaves regular paths unmarked', async (t) => {
+  const project = await mkdtemp(path.join(os.tmpdir(), 'skill-root-link-'));
+  temporaryDirectories.push(project);
+  const source = path.join(project, 'shared');
+  const skill = path.join(source, 'probe-skill');
+  await mkdir(skill, {recursive:true});
+  await mkdir(path.join(project, '.claude'));
+  await writeFile(path.join(skill, 'SKILL.md'), '---\nname: probe-skill\ndescription: Synthetic.\n---\n');
+  const root=path.join(project, '.claude', 'skills');
+  try { await symlink(source,root,'dir'); }
+  catch (error) { if (process.platform === 'win32' && ['EPERM','EACCES'].includes(error.code)) return t.skip('Symlink privileges unavailable'); throw error; }
+  const args=[cliPath,'check-agent','--agent','claude-code','--scope','project','--skill','probe-skill','--cwd',project,'--format','json'];
+  const linked=spawnSync(process.execPath,args,{encoding:'utf8'});
+  assert.equal(linked.status,0,linked.stderr);
+  assert.deepEqual(JSON.parse(linked.stdout).symlinkPaths,[root]);
+  await rm(root);
+  await mkdir(path.join(root, 'probe-skill'),{recursive:true});
+  await writeFile(path.join(root, 'probe-skill', 'SKILL.md'),'---\nname: probe-skill\ndescription: Synthetic.\n---\n');
+  const regular=spawnSync(process.execPath,args,{encoding:'utf8'});
+  assert.equal(regular.status,0,regular.stderr);
+  assert.equal(JSON.parse(regular.stdout).symlinkPaths,undefined);
+});
