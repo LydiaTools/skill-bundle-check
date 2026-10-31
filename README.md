@@ -8,6 +8,8 @@ Using a Skill inside a plugin? [Check the surrounding plugin files](#plugin-tree
 
 Not sure where a Skill was installed or whether its copy changed? [Follow the practical checklist](docs/where-is-my-skill.md).
 
+Uploading one Skill as a ZIP? [Review the archive structure](#review-a-single-skill-zip).
+
 Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares two Skill folders; `diff-tree` compares larger selected directory trees, including plugin files outside a Skill folder. `review-pipes` points out certain Markdown table escapes; `review-shell` highlights selected script paths in shell examples. Both provide hints for human review.
 
 It does not run the skill, start the agent, or claim that the agent loaded it at runtime.
@@ -100,6 +102,20 @@ node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope 
 ```
 
 The command intentionally exits with code 1 and reports that `probe-skill` exists under the shared `.agents/skills` root, not Antigravity CLI's documented global root. No agent is launched.
+
+## Review a single-Skill ZIP
+
+If an uploader rejects a ZIP, inspect its directory before retrying. With Python 3.9+:
+
+```sh
+python3 scripts/check_skill_zip.py /path/to/your-skill.zip
+```
+
+The read-only check reports the number and paths of exact-case `SKILL.md` entries and flags Unix-mode symlinks, duplicate archive paths, encrypted entries, unsafe paths and case variants. It does not extract or execute files. Exit `0` means these checks found no concerns; `1` means review the findings; `2` means the archive could not be inspected. Add `--json` for a machine-readable report.
+
+For a real historical example, [Humanizer #224](https://github.com/blader/humanizer/issues/224) reported an uploader rejecting a symlink. We checked the GitHub source archive at commit [`43c9767`](https://github.com/blader/humanizer/tree/43c97670b563cfa75e4f16ef00c32e933104d10a): this tool reported one symlink and two `SKILL.md` entries. The upstream [fix](https://github.com/blader/humanizer/pull/226) published a separate single-file package; its v2.11.1 release ZIP produced no findings in this check. This is a historical example, not a statement about current releases. We did not upload either ZIP to Claude.
+
+This is for a **single-Skill** upload, not a multi-skill plugin validator. Platform rules differ; a clean result does not prove an upload will succeed or an agent will load the Skill. The tool reads directory metadata only: it does not validate YAML, file contents, compression integrity, platform policies or security. Archives over 64 MiB, ZIP64, multi-disk ZIPs, more than 5,000 entries, directories over 4 MiB, trailing data and comments containing an end-record signature are unsupported.
 
 ## Try a fictional update
 

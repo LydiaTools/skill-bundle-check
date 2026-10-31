@@ -8,6 +8,8 @@ Skill 包含在插件中？[检查外层插件文件](#plugin-tree)。
 
 不确定 Skill 装在哪里，或安装副本有没有变化？[看排查步骤](docs/where-is-my-skill.zh-CN.md)。
 
+需要上传单个 Skill 的 ZIP？[先检查压缩包结构](#检查单个-skill-zip)。
+
 Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个 Skill 文件夹，`diff-tree` 对比更大的指定目录，包含 Skill 外层的插件文件。`review-pipes` 提示人工检查部分 Markdown 表格转义；`review-shell` 提示复核部分 Shell 示例中的脚本路径。
 
 它不会运行 Skill、启动 Agent，也不会声称 Agent 已在运行时加载了 Skill。
@@ -100,6 +102,20 @@ node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope 
 ```
 
 此命令会按预期以退出码 1 结束，并报告 `probe-skill` 只在共享 `.agents/skills` 目录，没有出现在 Antigravity CLI 文档中的全局目录。不会启动 Agent。
+
+## 检查单个 Skill ZIP
+
+上传 ZIP 失败时，可先用 Python 3.9+ 检查压缩包目录：
+
+```sh
+python3 scripts/check_skill_zip.py /path/to/your-skill.zip
+```
+
+这个只读检查会列出大小写准确的 `SKILL.md` 数量与路径，并提示 Unix 格式的符号链接、重复路径、加密条目、不安全路径和文件名大小写差异；它不会解压或执行文件。退出码 `0` 表示这些检查没有发现问题，`1` 表示需要查看提示，`2` 表示无法检查。加 `--json` 可输出机器可读报告。
+
+例如，[Humanizer #224](https://github.com/blader/humanizer/issues/224) 曾报告上传包因为符号链接被拒。我们检查了它在提交 [`43c9767`](https://github.com/blader/humanizer/tree/43c97670b563cfa75e4f16ef00c32e933104d10a) 的 GitHub 源码压缩包，本工具发现一个符号链接和两个 `SKILL.md` 条目。上游后来[修复](https://github.com/blader/humanizer/pull/226)并发布了单文件安装包；其 v2.11.1 发行 ZIP 在此检查中没有提示。这是历史案例，不代表当前发行版仍有问题；我们没有把这两个 ZIP 上传到 Claude。
+
+此检查面向**单个 Skill**，不是多 Skill 插件的校验器。不同平台规则可能不同；没有提示也不代表一定能上传或被 Agent 加载。工具只读取目录元数据，不验证 YAML、文件内容、压缩完整性、平台规则或安全性。超过 64 MiB 的包、ZIP64、多卷 ZIP、超过 5,000 个条目、超过 4 MiB 的目录、尾部附加数据和含结束记录标记的 ZIP 注释暂不支持。
 
 ## 复核 Shell 示例里的脚本路径
 
