@@ -20,6 +20,8 @@ Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地�
 
 它不会运行 Skill、启动 Agent，也不会声称 Agent 已在运行时加载了 Skill。
 
+真实案例：[规则合并后，相对链接如何失效](docs/case-generated-rule-links.zh-CN.md)。
+
 ## 为什么做这个工具
 
 社区里已经出现多种 Skill 安装后引用失效的问题：

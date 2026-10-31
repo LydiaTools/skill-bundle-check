@@ -30,7 +30,7 @@ People have reported Agent Skills whose `SKILL.md` points to files that are miss
 - [CLI-Anything #331](https://github.com/HKUDS/CLI-Anything/issues/331) reports an installer that copies the skill but leaves its referenced methodology files behind.
 - [Vercel Skills #1851](https://github.com/vercel-labs/skills/issues/1851) reports a successful global install that places a Skill in a shared directory instead of Antigravity CLI's documented global directory.
 
-Format validation alone may not catch these failures. A [reproduction report](https://tinkerhood.com/learn/skill-references-and-assets/) shows a skill-reference check passing while the referenced file is missing. This tool checks the actual source and installed folders instead.
+Format validation alone may not catch these failures. A [reproduction report](https://tinkerhood.com/learn/skill-references-and-assets/) shows a skill-reference check passing while the referenced file is missing. This tool checks the actual source and installed folders instead. See also a [real generated-guide link case](docs/case-generated-rule-links.md).
 
 Related but outside this check: [Microsoft APM #2966](https://github.com/microsoft/apm/issues/2966) reports a resource that **was installed**, while a generated Codex agent TOML file retained a link relative to its old location. `check` reads Markdown in Skill folders; it does not inspect generated agent TOML or prove how an agent resolves it.
 
