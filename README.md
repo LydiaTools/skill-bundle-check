@@ -123,6 +123,8 @@ This is a read-only snapshot, not a reservation, an installer simulation, a back
 
 If an uploader rejects a ZIP, [choose it in the browser](https://lydiatools.github.io/skill-bundle-check/web/zip.html). The file stays in the tab; only ZIP directory metadata is read. The browser version supports UTF-8 and ASCII entry names; legacy non-ASCII names and Unicode Path extra fields are not supported.
 
+If the only `SKILL.md` is loose at the ZIP root, the online checker points Claude web and desktop users to the platform's top-level folder instructions. This hint does not check the rest of the layout or verify an upload. The fixed v0.14.1 download predates it.
+
 ![Actual browser ZIP review showing two entry files and a symlink in the labelled fictional example](docs/assets/zip-review-en.png)
 
 *Actual browser view using the included fictional example. No real Skill is loaded in this screenshot.*

@@ -4,8 +4,9 @@ import os from 'node:os';import path from 'node:path';import assert from 'node:a
 import {makeZip} from '../test/zip-fixtures.mjs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
 const root=path.resolve('.'), temp=await mkdtemp(path.join(os.tmpdir(),'skill-zip-ui-'));
-const good=path.join(temp,'single.zip'), bad=path.join(temp,'fictional-problem.zip'), corrupt=path.join(temp,'broken.zip');
+const good=path.join(temp,'single.zip'), rootEntry=path.join(temp,'root-entry.zip'), bad=path.join(temp,'fictional-problem.zip'), corrupt=path.join(temp,'broken.zip');
 await writeFile(good,makeZip([{name:'sample/SKILL.md'}]));
+await writeFile(rootEntry,makeZip([{name:'SKILL.md'},{name:'references/example.md'}]));
 await writeFile(bad,makeZip([{name:'sample/SKILL.md'},{name:'nested/SKILL.md',mode:0o120777},{name:'<img src=x onerror=alert(1)>/SKILL.md'}]));
 await writeFile(corrupt,'not a ZIP');
 const server=createServer(async(req,res)=>{const name=decodeURIComponent(new URL(req.url,'http://local').pathname);const file=path.resolve(root,'.'+name+(name.endsWith('/')?'index.html':''));if(!file.startsWith(root+'/')){res.writeHead(403);return res.end()}try{res.setHeader('Content-Type',{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[path.extname(file)]||'application/octet-stream');res.end(await readFile(file))}catch{res.writeHead(404);res.end()}});
@@ -22,6 +23,21 @@ try{
  assert.match(await page.locator('#results').innerText(),/Symbolic link/);
  assert.match(await page.locator('#results').innerText(),/SKILL\.md entries found: 3/);
  assert.equal(await page.locator('#results img').count(),0);
+ await page.getByLabel('Choose ZIP').setInputFiles(rootEntry);
+ await page.waitForFunction(()=>!document.querySelector('#root-hint').hidden);
+ assert.match(await page.locator('#summary').innerText(),/Check the folder layout/);
+ assert.equal(await page.locator('#count').innerText(),'0 + hint');
+ assert.match(await page.locator('#root-hint').innerText(),/one top-level Skill folder/);
+ assert.match(await page.locator('#root-hint a').getAttribute('href'),/^https:\/\/support\.claude\.com\//);
+ await page.screenshot({path:path.join(os.tmpdir(),'skill-zip-root-hint-en.png'),fullPage:true});
+ await page.locator('#language').click();
+ assert.match(await page.locator('#root-hint').innerText(),/顶层 Skill 文件夹/);
+ assert.equal(await page.locator('#count').innerText(),'0 + 提示');
+ await page.screenshot({path:path.join(os.tmpdir(),'skill-zip-root-hint-zh.png'),fullPage:true});
+ await page.locator('#language').click();
+ await page.getByLabel('Choose ZIP').setInputFiles(good);
+ await page.waitForFunction(()=>document.querySelector('#summary').textContent.includes('No structural findings'));
+ assert.equal(await page.locator('#root-hint').isHidden(),true);
  await page.locator('#example').click();
  await page.waitForFunction(()=>document.querySelector('#results').textContent.includes('example/alias/SKILL.md'));
  assert.match(await page.locator('#filename').innerText(),/Fictional example/);
@@ -34,6 +50,10 @@ try{
  const mobile=await browser.newPage({viewport:{width:390,height:844}});
  mobile.on('request',r=>requests.push({url:r.url(),method:r.method()}));mobile.on('pageerror',e=>errors.push(String(e)));
  await mobile.goto(`http://127.0.0.1:${server.address().port}/web/zip.html?lang=zh`);
+ await mobile.getByLabel('选择 ZIP').setInputFiles(rootEntry);
+ await mobile.waitForFunction(()=>!document.querySelector('#root-hint').hidden);
+ assert(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ await mobile.screenshot({path:path.join(os.tmpdir(),'skill-zip-root-hint-mobile.png'),fullPage:true});
  await mobile.getByRole('button',{name:'试用虚构示例'}).click();
  await mobile.waitForFunction(()=>document.querySelector('#summary').textContent.includes('需要检查'));
  assert.match(await mobile.locator('#filename').innerText(),/虚构示例/);
@@ -60,7 +80,7 @@ try{
   for(const file of [process.env.REAL_FIXED_ZIP,process.env.REAL_PERSONAL_ZIP]){
    await page.getByLabel('选择 ZIP').setInputFiles(file);
    await page.waitForFunction(()=>document.querySelector('#summary').textContent.includes('未发现结构问题'));
-   assert.equal(await page.locator('#count').innerText(),'0');
+   assert.match(await page.locator('#count').innerText(),/^0(?: \+ 提示)?$/);
   }
  }
  assert(requests.every(r=>r.method==='GET'&&r.url.startsWith(`http://127.0.0.1:${server.address().port}/`)));

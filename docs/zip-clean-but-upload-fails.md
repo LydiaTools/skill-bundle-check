@@ -9,8 +9,11 @@ One example: [Prompt Master issue #19](https://github.com/nidhinjs/prompt-master
 ## What to check next
 
 1. Read the exact error and confirm whether the destination asks for a **Skill** or a **plugin**; their packaging rules can differ.
+   Claude's [web and desktop packaging guide](https://support.claude.com/en/articles/12512198-how-to-create-custom-skills) asks for a top-level Skill folder inside the ZIP. For example, `my-skill/SKILL.md` is different from a loose `SKILL.md` at the ZIP root. Claude Code instead uses Skill folders on disk; see its [location guide](https://code.claude.com/docs/en/skills#choose-where-skills-load). These are different workflows.
 2. For a Skill folder you trust and control, check the `SKILL.md` frontmatter against the [Agent Skills specification](https://agentskills.io/specification) and the destination's own instructions. The specification lists `name` and `description` as required fields and shows how to put additional metadata inside `metadata`.
 3. The [reference validator](https://github.com/agentskills/agentskills/tree/69ef37e9424c0a7ea9dd2293b559e43ec8176379/skills-ref#usage) can check a local folder after installation: `skills-ref validate path/to/skill`. Its maintainers describe it as a demonstration, not a production validator. Its result is not a platform upload test.
 4. Make any correction in your own copy, inspect the contents, rebuild the package, and try the destination's upload again. Keep your original files until you are happy with the result.
 
 Skill Bundle Check does not modify ZIPs or Skill content. A clean metadata result is not a security, YAML, content-integrity, or platform-acceptance verdict.
+
+The current online ZIP checker offers a Claude-specific hint when the sole entrypoint is exactly `SKILL.md` at the ZIP root. It does not validate the rest of the folder layout or upload the file. The fixed v0.14.1 download does not include this online hint.
