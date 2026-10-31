@@ -6,6 +6,8 @@
 
 Using a Skill inside a plugin? [Check the surrounding plugin files](#plugin-tree).
 
+Not sure where a Skill was installed or whether its copy changed? [Follow the practical checklist](docs/where-is-my-skill.md).
+
 Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares two Skill folders; `diff-tree` compares larger selected directory trees, including plugin files outside a Skill folder. `review-pipes` points out certain Markdown table escapes; `review-shell` highlights selected script paths in shell examples. Both provide hints for human review.
 
 It does not run the skill, start the agent, or claim that the agent loaded it at runtime.
