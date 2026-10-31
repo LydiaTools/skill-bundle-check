@@ -8,7 +8,7 @@ Using a Skill inside a plugin? [Check the surrounding plugin files](#plugin-tree
 
 Not sure where a Skill was installed or whether its copy changed? [Follow the practical checklist](docs/where-is-my-skill.md).
 
-Uploading one Skill as a ZIP? [Review the archive structure](#review-a-single-skill-zip).
+Uploading one Skill as a ZIP? [Review its structure in your browser](https://lydiatools.github.io/skill-bundle-check/web/zip.html) or [use Python](#review-a-single-skill-zip).
 
 Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares two Skill folders; `diff-tree` compares larger selected directory trees, including plugin files outside a Skill folder. `review-pipes` points out certain Markdown table escapes; `review-shell` highlights selected script paths in shell examples. Both provide hints for human review.
 
@@ -105,7 +105,13 @@ The command intentionally exits with code 1 and reports that `probe-skill` exist
 
 ## Review a single-Skill ZIP
 
-If an uploader rejects a ZIP, inspect its directory before retrying. With Python 3.9+:
+If an uploader rejects a ZIP, [choose it in the browser](https://lydiatools.github.io/skill-bundle-check/web/zip.html). The file stays in the tab; only ZIP directory metadata is read. The browser version supports UTF-8 and ASCII entry names; legacy non-ASCII names and Unicode Path extra fields are not supported.
+
+![Actual browser ZIP review showing two entry files and a symlink in the labelled fictional example](docs/assets/zip-review-en.png)
+
+*Actual browser view using the included fictional example. No real Skill is loaded in this screenshot.*
+
+Or use Python 3.9+:
 
 ```sh
 python3 scripts/check_skill_zip.py /path/to/your-skill.zip

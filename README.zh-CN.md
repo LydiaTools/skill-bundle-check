@@ -8,7 +8,7 @@ Skill 包含在插件中？[检查外层插件文件](#plugin-tree)。
 
 不确定 Skill 装在哪里，或安装副本有没有变化？[看排查步骤](docs/where-is-my-skill.zh-CN.md)。
 
-需要上传单个 Skill 的 ZIP？[先检查压缩包结构](#检查单个-skill-zip)。
+需要上传单个 Skill 的 ZIP？可[在浏览器检查结构](https://lydiatools.github.io/skill-bundle-check/web/zip.html?lang=zh)，也可[用 Python 检查](#检查单个-skill-zip)。
 
 Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个 Skill 文件夹，`diff-tree` 对比更大的指定目录，包含 Skill 外层的插件文件。`review-pipes` 提示人工检查部分 Markdown 表格转义；`review-shell` 提示复核部分 Shell 示例中的脚本路径。
 
@@ -105,7 +105,13 @@ node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope 
 
 ## 检查单个 Skill ZIP
 
-上传 ZIP 失败时，可先用 Python 3.9+ 检查压缩包目录：
+上传 ZIP 失败时，可先[在浏览器选择文件](https://lydiatools.github.io/skill-bundle-check/web/zip.html?lang=zh)。文件留在当前标签页，只读取 ZIP 目录信息。网页版支持 UTF-8 和 ASCII 文件名，暂不支持旧式非 ASCII 编码和 Unicode Path 扩展字段。
+
+![浏览器 ZIP 检查界面：标注为虚构示例的压缩包显示两个入口文件和一个符号链接](docs/assets/zip-review-zh.png)
+
+*实际浏览器界面，使用内置虚构示例；截图没有加载真实 Skill。*
+
+也可以使用 Python 3.9+：
 
 ```sh
 python3 scripts/check_skill_zip.py /path/to/your-skill.zip

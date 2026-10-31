@@ -107,6 +107,15 @@ class ZipInspectionTests(unittest.TestCase):
         with self.assertRaisesRegex(CannotInspect, 'comments'):
             inspect_zip(self.path)
 
+    def test_ambiguous_end_record_in_comment_is_rejected(self):
+        import struct
+        self.archive([('SKILL.md', 'x')])
+        fake_end = struct.pack('<4s4H2LH', b'PK\x05\x06', 0, 0, 0, 0, 0, 0, 0)
+        with zipfile.ZipFile(self.path, 'a') as z:
+            z.comment = fake_end
+        with self.assertRaisesRegex(CannotInspect, 'ambiguous'):
+            inspect_zip(self.path)
+
 
 if __name__ == '__main__':
     unittest.main()
