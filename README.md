@@ -262,7 +262,7 @@ node src/cli.js check ./skills/my-skill ./dist/my-skill --format json
 - Relative links in the installed copy resolve inside that bundle.
 - Absolute paths, missing files, broken symlinks, and links that escape the bundle root are reported with file and line.
 
-It reads Markdown links, reference-style link definitions, HTML `href`/`src`, and conventional `assets/`, `references/`, or `scripts/` paths written in inline code. It does not parse every Markdown extension or execute examples.
+It reads Markdown links, reference-style link definitions, HTML `href`/`src`, and conventional `assets/`, `references/`, or `scripts/` paths written in inline code. Markdown links and explicit `./` or `../` paths are checked relative to their document. For an unqualified inline path in a nested document, it also considers the Skill root: if both locations exist, it flags the ambiguity for review. If only one exists it checks that location, but cannot establish the author's intended working directory. It does not parse every Markdown extension or execute examples.
 
 `check-agent` checks for the selected Skill's `SKILL.md` at the chosen documented root. Built-in paths link to the platform documentation used for that mapping; custom roots are checked exactly as supplied.
 

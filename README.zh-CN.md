@@ -227,7 +227,7 @@ node src/cli.js check ./skills/my-skill ./dist/my-skill --format json
 - 安装目录中的相对链接仍在包内且可访问。
 - 报告绝对路径、缺失文件、失效符号链接和越出包目录的链接，并标出文件与行号。
 
-支持 Markdown 行内链接、引用式链接定义、HTML `href`/`src`，以及行内代码中常见的 `assets/`、`references/`、`scripts/` 路径。它不会解析所有 Markdown 扩展，也不会执行示例代码。
+支持 Markdown 行内链接、引用式链接定义、HTML `href`/`src`，以及行内代码中常见的 `assets/`、`references/`、`scripts/` 路径。Markdown 链接及以 `./` 或 `../` 开头的路径按文档所在目录检查；嵌套文档中不带前缀的行内路径也会检查 Skill 根目录。两个位置都存在时提示人工判断；只有一个存在时检查该位置，但工具无法确认作者原本预期的工作目录。它不会解析所有 Markdown 扩展，也不会执行示例代码。
 
 `check-agent` 检查选定 Skill 的 `SKILL.md` 是否在所选 Agent 的文档路径中。内置路径会附带对应平台文档；自定义根目录按传入路径原样检查。
 

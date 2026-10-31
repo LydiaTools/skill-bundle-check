@@ -35,7 +35,7 @@ export async function checkBundle(sourcePath, installedPath) {
 			if (kind !== 'local') continue;
 			referencesChecked++;
 
-			const sourceTarget = await resolveReference(sourceRoot, doc, ref.target);
+			const sourceTarget = await resolveReference(sourceRoot, doc, ref.target, ref.kind);
 			if (sourceTarget.issue) {
 				issues.push(issue(sourceTarget.issue.code, 'source', doc, ref.line, ref.target, sourceTarget.issue.message));
 				continue;
@@ -60,7 +60,7 @@ export async function checkBundle(sourcePath, installedPath) {
 		for (const ref of extractReferences(installedText)) {
 			if (classifyTarget(ref.target) !== 'local') continue;
 			referencesChecked++;
-			const resolved = await resolveReference(installedRoot, doc, ref.target);
+			const resolved = await resolveReference(installedRoot, doc, ref.target, ref.kind);
 			if (resolved.issue) {
 				issues.push(issue(resolved.issue.code, 'installed', doc, ref.line, ref.target, resolved.issue.message));
 			}
@@ -135,9 +135,10 @@ function stripFencedCode(markdown) {
 function extractReferences(markdown) {
 	const body = stripFencedCode(markdown);
 	const found = new Map();
-	const add = (target, offset) => {
+	const add = (target, offset, kind = 'link') => {
 		const cleaned = cleanTarget(target);
-		if (cleaned && !found.has(cleaned)) found.set(cleaned, lineAt(body, offset));
+		const key = `${kind}\0${cleaned}`;
+		if (cleaned && !found.has(key)) found.set(key, { target: cleaned, line: lineAt(body, offset), kind });
 	};
 
 	const inlineLink = /!?\[[^\]]*\]\(\s*(?:<([^>\n]+)>|([^\s)]+))(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?\s*\)/g;
@@ -152,10 +153,10 @@ function extractReferences(markdown) {
 	const inlineCode = /`([^`\n]+)`/g;
 	for (const match of body.matchAll(inlineCode)) {
 		const value = match[1]?.trim() ?? '';
-		if (CONVENTIONAL_PATH.test(value)) add(value, match.index ?? 0);
+		if (CONVENTIONAL_PATH.test(value)) add(value, match.index ?? 0, 'inline');
 	}
 
-	return [...found].map(([target, line]) => ({ target, line }));
+	return [...found.values()];
 }
 
 function cleanTarget(target) {
@@ -179,7 +180,7 @@ function classifyTarget(target) {
 	return 'local';
 }
 
-async function resolveReference(root, markdownFile, target) {
+async function resolveReference(root, markdownFile, target, referenceKind) {
 	const kind = classifyTarget(target);
 	if (kind === 'non-portable') {
 		return { issue: { code: 'NON_PORTABLE_LINK', message: `Use a relative path or web URL instead of: ${target}` } };
@@ -193,6 +194,19 @@ async function resolveReference(root, markdownFile, target) {
 		return { issue: { code: 'LINK_ESCAPES_ROOT', message: `Reference leaves the bundle directory: ${target}` } };
 	}
 	const pathIssue = await checkExistingPath(root, absolute);
+	// Markdown links have a defined base; unqualified inline code may instead
+	// describe a path relative to the Skill root. Explicit ./ and ../ stay local.
+	if (referenceKind === 'inline' && !/^\.\.?\//.test(target)) {
+		const rootAbsolute = path.resolve(root, relativeTarget);
+		if (rootAbsolute !== absolute && pathInsideRoot(root, rootAbsolute)) {
+			const rootIssue = await checkExistingPath(root, rootAbsolute);
+			if (pathIssue && !pathIssue.absent) return { issue: pathIssue };
+			if (rootIssue && !rootIssue.absent) return { issue: rootIssue };
+			if (!pathIssue && !rootIssue) return { issue: { code: 'AMBIGUOUS_INLINE_REFERENCE', message: `Inline path exists relative to both document and bundle root; review intent: ${target}` } };
+			if (pathIssue && !rootIssue) return { absolute: rootAbsolute };
+			if (pathIssue && rootIssue) return { issue: { code: 'LINK_MISSING', message: `Inline path not found relative to document or bundle root: ${target}` } };
+		}
+	}
 	return pathIssue ? { issue: pathIssue } : { absolute };
 }
 
@@ -204,8 +218,12 @@ function pathInsideRoot(root, target) {
 async function checkExistingPath(root, target) {
 	try {
 		await lstat(target);
-	} catch {
-		return { code: 'LINK_MISSING', message: `Referenced file is missing: ${path.relative(root, target)}` };
+	} catch (error) {
+		if (error.code === 'ENOENT' || error.code === 'ENOTDIR') {
+			const parentIssue = await checkMissingParents(root, target);
+			return parentIssue ?? { code: 'LINK_MISSING', absent: true, message: `Referenced file is missing: ${path.relative(root, target)}` };
+		}
+		return { code: 'PATH_UNAVAILABLE', message: `Cannot inspect referenced path: ${path.relative(root, target)} (${error.code ?? 'unknown error'})` };
 	}
 	let realTarget;
 	try {
@@ -215,6 +233,26 @@ async function checkExistingPath(root, target) {
 	}
 	if (!pathInsideRoot(root, realTarget)) {
 		return { code: 'SYMLINK_ESCAPES_ROOT', message: `Path resolves outside the bundle: ${path.relative(root, target)}` };
+	}
+	return null;
+}
+
+async function checkMissingParents(root, target) {
+	const parts = path.relative(root, target).split(path.sep).slice(0, -1);
+	let current = root;
+	for (const part of parts) {
+		current = path.join(current, part);
+		let metadata;
+		try { metadata = await lstat(current); }
+		catch (error) {
+			if (error.code === 'ENOENT' || error.code === 'ENOTDIR') return null;
+			return { code: 'PATH_UNAVAILABLE', message: `Cannot inspect referenced path: ${path.relative(root, current)} (${error.code ?? 'unknown error'})` };
+		}
+		if (!metadata.isSymbolicLink()) continue;
+		let destination;
+		try { destination = await realpath(current); }
+		catch { return { code: 'LINK_MISSING', message: `Broken symbolic link or inaccessible target: ${path.relative(root, current)}` }; }
+		if (!pathInsideRoot(root, destination)) return { code: 'SYMLINK_ESCAPES_ROOT', message: `Path resolves outside the bundle: ${path.relative(root, current)}` };
 	}
 	return null;
 }
