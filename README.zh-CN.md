@@ -10,6 +10,10 @@ Skill 包含在插件中？[检查外层插件文件](#plugin-tree)。
 
 需要上传单个 Skill 的 ZIP？可[在浏览器检查结构](https://lydiatools.github.io/skill-bundle-check/web/zip.html?lang=zh)，也可[用 Python 检查](#检查单个-skill-zip)。
 
+[![Skill ZIP 文件夹结构示意与虚构 ZIP 在真实检查工具中的提示](docs/assets/skill-zip-guide-zh.png)](https://lydiatools.github.io/skill-bundle-check/web/zip.html?lang=zh)
+
+*左侧是文件夹结构示意，右侧是虚构 ZIP 的真实工具检查结果；点击图片可试用。*
+
 准备安装同名 Skill？先[检查目标路径](#安装前检查目标路径)。
 
 Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个 Skill 文件夹，`diff-tree` 对比更大的指定目录，包含 Skill 外层的插件文件。`review-pipes` 提示人工检查部分 Markdown 表格转义；`review-shell` 提示复核部分 Shell 示例中的脚本路径。

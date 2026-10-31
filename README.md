@@ -10,6 +10,10 @@ Not sure where a Skill was installed or whether its copy changed? [Follow the pr
 
 Uploading one Skill as a ZIP? [Review its structure in your browser](https://lydiatools.github.io/skill-bundle-check/web/zip.html) or [use Python](#review-a-single-skill-zip).
 
+[![Example Skill ZIP folder layout beside the actual checker's hint for a fictional ZIP](docs/assets/skill-zip-guide-en.png)](https://lydiatools.github.io/skill-bundle-check/web/zip.html)
+
+*A folder-layout illustration beside a real checker result for a fictional ZIP. Click to try the ZIP review.*
+
 Installing a same-name Skill? [Check the destination first](#check-a-destination-before-installing).
 
 Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares two Skill folders; `diff-tree` compares larger selected directory trees, including plugin files outside a Skill folder. `review-pipes` points out certain Markdown table escapes; `review-shell` highlights selected script paths in shell examples. Both provide hints for human review.
