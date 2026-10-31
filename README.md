@@ -198,6 +198,8 @@ node src/cli.js diff ./skills/my-skill ~/.agents/skills/my-skill
 
 For example, in an isolated test with `skills@1.7.4`, a local skill installed with `--copy` stayed at v1 after its source changed to v2. The installer reported that local sources could not be checked automatically and suggested re-adding it. `diff` identified the changed `SKILL.md`. This is one tested setup; behavior depends on installer version and mode. [Original local-update report](https://github.com/vercel-labs/skills/issues/1440).
 
+Added your own notes inside an installed Skill? [See the backup-and-compare walkthrough](docs/local-files-after-update.md) based on a reported `gh skill update` case and an isolated test.
+
 This read-only command lists differing relative paths and whether each was added, removed or changed. Add `--format json` to include SHA-256 values for CI. Exit 0 means the compared file bytes matched; 1 means differences; 2 means the check could not complete. It does not output file contents, select the authoritative copy, determine what the agent loaded, or update either folder. This is a snapshot: do not edit the trees during comparison. Empty directory-only changes are not compared.
 
 Both roots must be separate, non-overlapping existing directories with a regular `SKILL.md` at each root. Inner symbolic links and special files are refused; a root itself may resolve through a symlink. The scan stops rather than report a partial match above 2,000 entries, 8 MiB per file or 64 MiB total per directory. This is not an atomic security boundary against concurrent hostile filesystem changes. Check actual installed paths and output before sharing.
