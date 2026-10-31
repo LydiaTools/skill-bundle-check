@@ -4,7 +4,7 @@
 
 [在线对比 Skill 文件夹](https://lydiatools.github.io/skill-bundle-check/web/diff.html?lang=zh) · [检查 Markdown 表格](https://lydiatools.github.io/skill-bundle-check/web/?lang=zh) · [English](README.md)
 
-Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个指定目录的文件内容。`review-pipes` 提示人工检查部分 Markdown 表格转义；`review-shell` 提示复核部分 Shell 示例中的脚本路径。
+Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个 Skill 文件夹，`diff-tree` 对比更大的指定目录，包含 Skill 外层的插件文件。`review-pipes` 提示人工检查部分 Markdown 表格转义；`review-shell` 提示复核部分 Shell 示例中的脚本路径。
 
 它不会运行 Skill、启动 Agent，也不会声称 Agent 已在运行时加载了 Skill。
 
@@ -228,6 +228,18 @@ node src/cli.js diff ./skills/my-skill ~/.agents/skills/my-skill
 明确选择两个各自包含普通文件 `SKILL.md` 的独立目录后，工具只读对比普通文件的字节，输出有差异的相对路径和状态，加 `--format json` 可获取 SHA-256，不输出正文，也不修改文件。退出码 0 表示已比对的文件一致，1 表示有差异，2 表示检查未完成。空目录差异不计入；比较不能判断哪个版本正确、Agent 是否实际加载或执行。
 
 目录内部的符号链接与特殊文件不支持；超过 2,000 个条目、单文件 8 MiB 或每目录总计 64 MiB 时停止，不把部分结果当完整结果。运行期间请不要修改两个目录；这不是抵抗并发恶意替换的原子安全机制。
+
+## Skill 外层还有插件时
+
+Skill 文件一致，外面的插件配置却可能没有装进去。[Vercel Skills #2609](https://github.com/vercel-labs/skills/issues/2609) 记录了一位用户报告的 Claude Code 插件安装问题。在我们的 macOS 隔离测试中，`skills@1.7.4` 只复制了虚构插件内的 Skill；只对比 Skill 会显示一致，而对比插件源目录和安装目录能看到缺失的相对路径。
+
+先用虚构示例体验：
+
+```bash
+node src/cli.js diff-tree ./examples/plugin-source ./examples/plugin-installed
+```
+
+示例会列出仅存在于源目录的 `.claude-plugin/plugin.json`、`hooks/hooks.json`，以及因 Skill 目录位置变化而不同的路径；预期退出码为 1。实际使用时，请选择真实插件源目录和需要检查的实际安装目录。两个目录都必须存在，源目录至少有一个普通文件。只有相同的相对目录结构才能逐路径匹配；有意调整目录也会显示为差异。`diff-tree` 沿用 `diff` 的读取限制和退出码，但不要求根目录有 `SKILL.md`；它不比较空目录，也不证明插件已加载、钩子已运行或所选路径正确。
 
 ## 许可
 

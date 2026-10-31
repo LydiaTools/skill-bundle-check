@@ -16,6 +16,7 @@ Usage:
   skill-bundle-check snapshot <skill> <label=skills-root> [label=skills-root ...]
   skill-bundle-check compare <before.json> <after.json>
   skill-bundle-check diff <source-skill-dir> <installed-skill-dir> [--format text|json]
+  skill-bundle-check diff-tree <source-dir> <installed-dir> [--format text|json]
   skill-bundle-check review-pipes <markdown-file> [--format text|json]
   skill-bundle-check review-shell <source-skill-dir> <installed-skill-dir> [--format text|json]
 
@@ -29,7 +30,8 @@ All checks are read-only; none runs nor installs a skill.
 review-pipes offers non-blocking review hints for escaped pipes in inline code within ordinary Markdown tables.
 review-shell offers non-blocking hints for selected ./scripts/ commands in source SKILL.md shell fences.
 Snapshot and compare output JSON with paths; exit 0 if all targets are found, 1 for a missing/broken target, 2 for unavailable input.
-diff exits 0 for matching files, 1 for differences, and 2 when comparison cannot complete.
+diff and diff-tree exit 0 for matching files, 1 for differences, and 2 when comparison cannot complete.
+diff-tree compares selected directory trees, including plugin files above SKILL.md; it does not verify runtime loading.
 For Codex global checks, --codex-home overrides CODEX_HOME; --home isolates the default home.
 
 Supported agent profiles:
@@ -45,9 +47,9 @@ async function main(argv) {
 	if (command === 'check-agent') return await runAgentCheck(args);
 	if (command === 'snapshot') return await runPresenceSnapshot(args);
 	if (command === 'compare') return await runPresenceCompare(args);
-	if (command === 'diff') {
-		if (![2,4].includes(args.length) || (args.length === 4 && (args[2] !== '--format' || !['text','json'].includes(args[3])))) throw new Error('Use diff <source-skill-dir> <installed-skill-dir> [--format text|json]');
-		const result = await diffContent(args[0], args[1]);
+	if (command === 'diff' || command === 'diff-tree') {
+		if (![2,4].includes(args.length) || (args.length === 4 && (args[2] !== '--format' || !['text','json'].includes(args[3])))) throw new Error(`Use ${command} <source-dir> <installed-dir> [--format text|json]`);
+		const result = await diffContent(args[0], args[1], { requireSkill: command === 'diff' });
 		if (args[3] === 'json') console.log(JSON.stringify(result, null, 2));
 		else {
 			for (const item of result.changes) console.log(`${item.status.toUpperCase()}  ${JSON.stringify(item.path)}`);
