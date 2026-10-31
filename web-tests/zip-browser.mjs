@@ -15,6 +15,7 @@ try{
  const context=await browser.newContext({viewport:{width:1440,height:900}}),page=await context.newPage(),requests=[],errors=[];
  page.on('request',r=>requests.push({url:r.url(),method:r.method()}));page.on('pageerror',e=>errors.push(String(e)));
  await page.goto(`http://127.0.0.1:${server.address().port}/web/zip.html`);
+ assert.match(await page.locator('#guide').getAttribute('href'),/zip-clean-but-upload-fails\.md$/);
  assert.equal(await page.getByLabel('Choose ZIP').count(),1);
  await page.getByLabel('Choose ZIP').setInputFiles(bad);
  await page.waitForFunction(()=>document.querySelector('#summary').textContent.includes('need review'));
@@ -26,6 +27,7 @@ try{
  assert.match(await page.locator('#filename').innerText(),/Fictional example/);
  await page.screenshot({path:path.join(os.tmpdir(),'skill-zip-desktop.png'),fullPage:true});
  await page.locator('#language').click();
+ assert.match(await page.locator('#guide').getAttribute('href'),/zip-clean-but-upload-fails\.zh-CN\.md$/);
  assert.match(await page.locator('#summary').innerText(),/需要检查/);
  assert.match(page.url(),/lang=zh/);
  await page.screenshot({path:path.join(os.tmpdir(),'skill-zip-desktop-zh.png'),fullPage:true});

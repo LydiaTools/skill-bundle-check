@@ -6,6 +6,7 @@ const strings={
 };
 strings.en.example='Try fictional example';strings.en.exampleName='Fictional example';
 strings.zh.example='试用虚构示例';strings.zh.exampleName='虚构示例';
+strings.en.guide='ZIP looks clean but upload fails?';strings.zh.guide='结构正常但仍上传失败？';
 const exampleZip='UEsDBBQAAAgAAAAAAAAAAAAAAAAAAAAAAAAQAAAAZXhhbXBsZS9TS0lMTC5tZFBLAwQUAAAIAAAAAAAAAAAAAAAAAAAAAAAAFgAAAGV4YW1wbGUvYWxpYXMvU0tJTEwubWRQSwECFAMUAAAIAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAApIEAAAAAZXhhbXBsZS9TS0lMTC5tZFBLAQIUAxQAAAgAAAAAAAAAAAAAAAAAAAAAAAAWAAAAAAAAAAAAAAD/oS4AAABleGFtcGxlL2FsaWFzL1NLSUxMLm1kUEsFBgAAAAACAAIAggAAAGIAAAAAAA==';
 let lang=new URLSearchParams(location.search).get('lang')==='zh'?'zh':'en', result=null, error='', working=false, selected='', sample=false, revision=0;
 const t=()=>strings[lang];
@@ -16,7 +17,7 @@ function render(){
  document.documentElement.lang=lang==='zh'?'zh-CN':'en';document.title=t().heading+' | Skill Bundle Check';
  document.querySelectorAll('[data-key]').forEach(el=>el.textContent=t()[el.dataset.key]);
  $('language').textContent=lang==='en'?'中文':'English';$('archive').setAttribute('aria-label',t().choose);
- $('filename').textContent=sample?t().exampleName:selected?safe(selected):t().none;$('other').href=lang==='zh'?'./diff.html?lang=zh':'./diff.html';
+ $('filename').textContent=sample?t().exampleName:selected?safe(selected):t().none;$('other').href=lang==='zh'?'./diff.html?lang=zh':'./diff.html';$('guide').href='https://github.com/LydiaTools/skill-bundle-check/blob/main/docs/zip-clean-but-upload-fails'+(lang==='zh'?'.zh-CN':'')+'.md';
  $('count').textContent=result?String(result.findingCount):'—';$('results').replaceChildren();
  $('summary').textContent=working?t().working:error?t()[error]:result?(result.status==='ok'?t().ok:t().review(result.findingCount)):t().empty;
  if(!result)return;
