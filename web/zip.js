@@ -19,7 +19,7 @@ const t=()=>strings[lang];
 // impersonate another filename in the findings list.
 const safe=s=>s.replace(/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g,c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0'));
 function render(){
- document.documentElement.lang=lang==='zh'?'zh-CN':'en';document.title=t().heading+' | Skill Bundle Check';
+ document.documentElement.lang=lang==='zh'?'zh-CN':'en';document.title=lang==='zh'?'Claude Skill ZIP 结构检查 | Skill Bundle Check':'Skill ZIP Checker for Claude | Skill Bundle Check';
  document.querySelectorAll('[data-key]').forEach(el=>el.textContent=t()[el.dataset.key]);
  $('language').textContent=lang==='en'?'中文':'English';$('archive').setAttribute('aria-label',t().choose);
  $('filename').textContent=sample?t().exampleName:selected?safe(selected):t().none;$('other').href=lang==='zh'?'./diff.html?lang=zh':'./diff.html';$('guide').href='https://github.com/LydiaTools/skill-bundle-check/blob/main/docs/zip-clean-but-upload-fails'+(lang==='zh'?'.zh-CN':'')+'.md';
