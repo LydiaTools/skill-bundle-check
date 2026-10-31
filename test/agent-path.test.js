@@ -54,6 +54,25 @@ test('uses the project skill directory for project scope', async () => {
 	assert.equal(result.expectedRoot, path.join(cwd, '.agents', 'skills'));
 });
 
+test('reports a Claude project skill found only in the shared project root', async () => {
+	const cwd = await makeTemporaryDirectory();
+	const home = await makeTemporaryDirectory();
+	await addSkill(path.join(cwd, '.agents', 'skills'), 'probe-skill');
+	await addSkill(path.join(home, '.agents', 'skills'), 'other-skill');
+	const result = await checkAgentPath({ agent: 'claude-code', skill: 'probe-skill', scope: 'project', cwd, home });
+	assert.equal(result.status, 'found-other-root');
+	assert.equal(result.expectedPresent, false);
+	assert.equal(result.expectedRoot, path.join(cwd, '.claude', 'skills'));
+	assert.deepEqual(result.otherLocations.map((item) => item.entry), [path.join(cwd, '.agents', 'skills', 'probe-skill', 'SKILL.md')]);
+	const noProjectCopy = await checkAgentPath({ agent: 'claude-code', skill: 'other-skill', scope: 'project', cwd, home });
+	assert.equal(noProjectCopy.status, 'not-found');
+	assert.deepEqual(noProjectCopy.otherLocations, []);
+	await addSkill(path.join(cwd, '.claude', 'skills'), 'probe-skill');
+	const installed = await checkAgentPath({ agent: 'claude-code', skill: 'probe-skill', scope: 'project', cwd, home });
+	assert.equal(installed.status, 'found');
+	assert.equal(installed.expectedPresent, true);
+});
+
 test('recognizes a Codex skill in the default CODEX_HOME without calling the agent', async () => {
 	const home = await makeTemporaryDirectory();
 	const codexRoot = path.join(home, '.codex', 'skills');

@@ -2,7 +2,7 @@
 
 **Your skill works in the repo. Does it still work after installation?**
 
-[Compare Skill folders online](https://lydiatools.github.io/skill-bundle-check/web/diff.html) · [Review Markdown tables](https://lydiatools.github.io/skill-bundle-check/web/) · [Download v0.14.2](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.14.2) · [中文说明](README.zh-CN.md)
+[Compare Skill folders online](https://lydiatools.github.io/skill-bundle-check/web/diff.html) · [Review Markdown tables](https://lydiatools.github.io/skill-bundle-check/web/) · [Download v0.14.3](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.14.3) · [中文说明](README.zh-CN.md)
 
 Using a Skill inside a plugin? [Check the surrounding plugin files](#plugin-tree).
 
@@ -88,6 +88,8 @@ For a repository-local Skill, use `--scope project`:
 node src/cli.js check-agent --agent claude-code --skill my-skill --scope project
 node src/cli.js check-agent --agent codex-cli --skill my-skill --scope project
 ```
+
+If the Claude Code project path is missing but the same Skill exists under the current project's `.agents/skills/`, v0.14.3 reports that other location and still exits `1` for the missing expected path. This helps investigate the cross-agent directory mismatch discussed in [Claude Code #31005](https://github.com/anthropics/claude-code/issues/31005); it does not install, link or verify runtime discovery. Run from the project directory or pass `--cwd /path/to/project`. The older v0.14.2 download does not include this project-root hint.
 
 For another agent, pass its documented Skills root directly:
 
