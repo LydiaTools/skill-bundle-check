@@ -64,6 +64,64 @@ test('catches a reference that exists in source but was omitted by installation'
 	);
 });
 
+test('checks an unqualified inline path against the Skill root when needed', async () => {
+	const files = {
+		'SKILL.md': '# Example\n',
+		'references/guide.md': 'Edit `assets/layout.html`.\n',
+		'assets/layout.html': '<main></main>\n',
+	};
+	await withBundles(files, files, async (source, installed) => {
+		const result = await checkBundle(source, installed);
+		assert.equal(result.ok, true);
+	});
+	const { 'assets/layout.html': omitted, ...incomplete } = files;
+	await withBundles(files, incomplete, async (source, installed) => {
+		const result = await checkBundle(source, installed);
+		assert.ok(result.issues.some((item) => item.code === 'REFERENCE_MISSING_FROM_INSTALL' && item.target === 'assets/layout.html'));
+	});
+});
+
+test('reports an inline path that can resolve to two different locations', async () => {
+	const files = {
+		'SKILL.md': '# Example\n',
+		'references/guide.md': 'Edit `assets/layout.html`.\n',
+		'assets/layout.html': 'root\n',
+		'references/assets/layout.html': 'nested\n',
+	};
+	await withBundles(files, files, async (source, installed) => {
+		const result = await checkBundle(source, installed);
+		assert.equal(result.ok, false);
+		assert.ok(result.issues.some((item) => item.code === 'AMBIGUOUS_INLINE_REFERENCE'));
+	});
+});
+
+test('does not hide a broken nested symlink behind a root-relative candidate', { skip: process.platform === 'win32' }, async () => {
+	const files = {
+		'SKILL.md': '# Example\n',
+		'references/guide.md': 'Edit `assets/layout.html`.\n',
+		'assets/layout.html': 'root\n',
+	};
+	await withBundles(files, files, async (source, installed) => {
+		await symlink('missing', path.join(installed, 'references', 'assets'), 'dir');
+		const result = await checkBundle(source, installed);
+		assert.ok(result.issues.some((item) => item.root === 'installed' && item.code === 'LINK_MISSING'));
+	});
+});
+
+test('keeps Markdown links and explicit relative inline paths document-relative', async () => {
+	const files = {
+		'SKILL.md': '# Example\n',
+		'references/guide.md': '[Open](assets/layout.html) and edit `./assets/layout.html`.\n',
+		'assets/layout.html': 'root only\n',
+	};
+	await withBundles(files, files, async (source, installed) => {
+		const result = await checkBundle(source, installed);
+		assert.equal(result.ok, false);
+		assert.ok(result.issues.some((item) => item.code === 'LINK_MISSING' && item.target === 'assets/layout.html'));
+		assert.ok(result.issues.some((item) => item.code === 'LINK_MISSING' && item.target === './assets/layout.html'));
+	});
+});
+
 test('catches source and installed links that escape their bundle roots', async () => {
 	await withBundles(
 		{ 'SKILL.md': '# Example\n\nRead [outside](../../README.md).\n' },
