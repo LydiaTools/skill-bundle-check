@@ -52,6 +52,7 @@ jobs:
         with:
           node-version: 22
       - run: node --test test/install-target.test.js
+      - run: node --test test/inline-path-windows.test.js
 
   web-browser:
     runs-on: ubuntu-24.04
