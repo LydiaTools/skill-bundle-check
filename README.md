@@ -2,7 +2,7 @@
 
 **Your skill works in the repo. Does it still work after installation?**
 
-[Compare Skill folders online](https://lydiatools.github.io/skill-bundle-check/web/diff.html) · [Review Markdown tables](https://lydiatools.github.io/skill-bundle-check/web/) · [中文说明](README.zh-CN.md)
+[Compare Skill folders online](https://lydiatools.github.io/skill-bundle-check/web/diff.html) · [Review Markdown tables](https://lydiatools.github.io/skill-bundle-check/web/) · [Download v0.14.2](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.14.2) · [中文说明](README.zh-CN.md)
 
 Using a Skill inside a plugin? [Check the surrounding plugin files](#plugin-tree).
 
@@ -123,7 +123,9 @@ This is a read-only snapshot, not a reservation, an installer simulation, a back
 
 If an uploader rejects a ZIP, [choose it in the browser](https://lydiatools.github.io/skill-bundle-check/web/zip.html). The file stays in the tab; only ZIP directory metadata is read. The browser version supports UTF-8 and ASCII entry names; legacy non-ASCII names and Unicode Path extra fields are not supported.
 
-If the only `SKILL.md` is loose at the ZIP root, the online checker points Claude web and desktop users to the platform's top-level folder instructions. This hint does not check the rest of the layout or verify an upload. The fixed v0.14.1 download predates it.
+If the only `SKILL.md` is loose at the ZIP root, the checker points Claude web and desktop users to the platform's top-level folder instructions. This hint does not check the rest of the layout or verify an upload. It is included in v0.14.2; the fixed v0.14.1 download predates it.
+
+To use this page from the downloaded ZIP, extract it, open a terminal in the extracted folder, and run `python3 -m http.server 8000 --bind 127.0.0.1` (on Windows, use `py -3` in place of `python3`). Open `http://127.0.0.1:8000/web/zip.html` in your browser. Stop the server with Ctrl+C. The page reads selected ZIPs in your browser and does not send them to the server.
 
 ![Actual browser ZIP review showing two entry files and a symlink in the labelled fictional example](docs/assets/zip-review-en.png)
 
