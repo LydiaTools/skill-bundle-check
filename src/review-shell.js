@@ -12,6 +12,8 @@ export async function reviewShell(sourcePath, installedPath) {
   const document = path.join(roots[0], 'SKILL.md');
   const info = await lstat(document);
   if (!info.isFile() || info.size > 1024 * 1024) throw new Error('Source SKILL.md must be a regular file no larger than 1 MiB.');
+  const installedEntry = await lstat(path.join(roots[1], 'SKILL.md'));
+  if (!installedEntry.isFile()) throw new Error('Installed SKILL.md must be a regular file.');
   const lines = (await readFile(document, 'utf8')).split(/\r?\n/);
   const findings = [];
   let fence = null;

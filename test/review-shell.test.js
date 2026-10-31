@@ -13,6 +13,8 @@ test('reports shell-fence script candidates as hints with root-relative status',
     await mkdir(path.join(source, 'scripts'), { recursive:true });
     await mkdir(path.join(installed, 'scripts'), { recursive:true });
     await writeFile(path.join(source, 'SKILL.md'), '# Test\n```bash\n./scripts/exists.sh aws\npython3 ./scripts/missing.py\n# ./scripts/comment.sh\n```\n```text\n./scripts/no.sh\n```\n');
+    await assert.rejects(() => reviewShell(source, installed), /SKILL\.md/);
+    await writeFile(path.join(installed, 'SKILL.md'), '# Installed example\n');
     await writeFile(path.join(source, 'scripts/exists.sh'), 'unused');
     await writeFile(path.join(installed, 'scripts/exists.sh'), 'unused');
     const result = await reviewShell(source, installed);
@@ -35,6 +37,7 @@ test('does not treat outside-root links as in-bundle files', async () => {
     const source=path.join(temp,'source'), installed=path.join(temp,'installed'), outside=path.join(temp,'outside');
     await mkdir(path.join(source,'scripts'),{recursive:true}); await mkdir(path.join(installed,'scripts'),{recursive:true}); await mkdir(outside);
     await writeFile(path.join(source,'SKILL.md'),'```sh\n./scripts/check.sh\n```\n');
+    await writeFile(path.join(installed,'SKILL.md'),'# Installed example\n');
     await writeFile(path.join(outside,'check.sh'),'unused');
     await symlink(path.join(outside,'check.sh'),path.join(source,'scripts/check.sh'));
     const result=await reviewShell(source,installed);
