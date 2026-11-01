@@ -115,7 +115,7 @@ node src/cli.js check-agent --agent antigravity-cli --skill probe-skill --scope 
 
 ## 安装前检查目标路径
 
-两个不同的 Skill 可能同名。[界面设计 Skill unslop 的 Issue](https://github.com/heydamir/unslop/issues/3) 提到了它与写作 Skill 同名；一个[尚在审核的安装说明 PR](https://github.com/heydamir/unslop/pull/5) 描述了递归复制时覆盖现有文件的情况。我们在 macOS 隔离目录中用两个虚构同名 Skill 测试，也观察到后复制的 `SKILL.md` 替换了原文件。
+两个不同的 Skill 可能同名。[界面设计 Skill unslop 的 Issue](https://github.com/heydamir/unslop/issues/3) 提到了它与写作 Skill 同名；一位贡献者在[已关闭、未合并的安装说明 PR](https://github.com/heydamir/unslop/pull/5) 中描述了递归复制可能覆盖现有目标文件。我们在 macOS 隔离目录中用两个虚构同名 Skill 测试，也观察到后复制的 `SKILL.md` 替换了原文件。
 
 复制前，先核对安装器实际要使用的**确切目标路径**：
 

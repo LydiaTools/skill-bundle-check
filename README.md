@@ -113,7 +113,7 @@ The command intentionally exits with code 1 and reports that `probe-skill` exist
 
 ## Check a destination before installing
 
-Two different Skills can have the same name. The UI-design Skill [unslop](https://github.com/heydamir/unslop/issues/3) and a writing Skill share one; an [open install PR](https://github.com/heydamir/unslop/pull/5) describes how a recursive copy can overwrite files in an existing destination. In an isolated macOS test, copying two fictional same-name Skill folders replaced the first `SKILL.md`.
+Two different Skills can have the same name. The UI-design Skill [unslop](https://github.com/heydamir/unslop/issues/3) and a writing Skill share one; a contributor's [closed, unmerged install PR](https://github.com/heydamir/unslop/pull/5) describes how a recursive copy can overwrite files in an existing destination. In an isolated macOS test, copying two fictional same-name Skill folders replaced the first `SKILL.md`.
 
 Before copying, inspect the **exact destination path** your installer will use:
 
