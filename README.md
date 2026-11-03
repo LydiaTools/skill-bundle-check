@@ -16,7 +16,9 @@ Uploading one Skill as a ZIP? [Review its structure in your browser](https://lyd
 
 Installing a same-name Skill? [Check the destination first](#check-a-destination-before-installing).
 
-Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares two Skill folders; `diff-tree` compares larger selected directory trees, including plugin files outside a Skill folder. `review-pipes` points out certain Markdown table escapes; `review-shell` highlights selected script paths in shell examples. Both provide hints for human review.
+Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `doctor` scans the immediate Skill entries in one or more selected roots for missing or broken `SKILL.md` paths. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares two Skill folders; `diff-tree` compares larger selected directory trees, including plugin files outside a Skill folder. `review-pipes` points out certain Markdown table escapes; `review-shell` highlights selected script paths in shell examples. Both provide hints for human review.
+
+`doctor` is currently available from the repository source; it is not included in the [v0.14.4 release](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.14.4).
 
 It does not run the skill, start the agent, or claim that the agent loaded it at runtime.
 
@@ -29,6 +31,7 @@ People have reported Agent Skills whose `SKILL.md` points to files that are miss
 - [OpenAI Codex #8364](https://github.com/openai/codex/issues/8364) reports an agent sometimes failing to find a referenced script; the maintainer linked it to a separate issue. The report does not establish that the installed script itself was missing.
 - [CLI-Anything #331](https://github.com/HKUDS/CLI-Anything/issues/331) reports an installer that copies the skill but leaves its referenced methodology files behind.
 - [Vercel Skills #1851](https://github.com/vercel-labs/skills/issues/1851) reports a successful global install that places a Skill in a shared directory instead of Antigravity CLI's documented global directory.
+- [Vercel Skills #456](https://github.com/vercel-labs/skills/issues/456) describes relative Skill links that can break when an installed `skills` directory is itself a symlink. One report describes 58 broken links after a global install. `doctor` can surface broken Skill-directory links and missing `SKILL.md` paths in selected roots; it does not repair them or determine whether an agent loaded the Skill.
 
 Format validation alone may not catch these failures. A [reproduction report](https://tinkerhood.com/learn/skill-references-and-assets/) shows a skill-reference check passing while the referenced file is missing. This tool checks the actual source and installed folders instead. See also a [real generated-guide link case](docs/case-generated-rule-links.md).
 
@@ -100,6 +103,19 @@ node src/cli.js check-agent --root ./custom-agent/skills --skill my-skill --scop
 Built-in profiles cover `claude-code`, `codex-cli`, `antigravity-cli`, `antigravity-ide`, and `antigravity-app`. Profile paths link to the platform documentation used for the mapping: [Claude Code Skills](https://code.claude.com/docs/en/skills), [Codex Skills](https://developers.openai.com/codex/skills/), and [Antigravity Skills](https://www.antigravity.google/docs/skills). Project scope checks the project directory represented by the current working directory. A missing Skill returns exit code 1. If the Skill is found in `~/.agents/skills` but not in the selected global root, the report shows both paths. A documented legacy Antigravity IDE path is also recognized. This checks file placement; it does not confirm runtime discovery or execution.
 
 From v0.14.4, when the expected `SKILL.md` exists through symbolic links, `check-agent` lists the link paths on the selected route. This helps diagnose discovery problems without asserting whether the agent follows them. [Claude Code issue #14836](https://github.com/anthropics/claude-code/issues/14836) contains version-specific reports. If an expected path contains a broken symbolic link, `check-agent` also shows the broken link. A [Codex report](https://github.com/openai/codex/issues/11314) was traced to a relative link pointing at the wrong location; this check diagnoses file paths, not agent loading.
+
+## Scan installed Skills for broken paths
+
+Use `doctor` when you want to inspect several Skills at once instead of naming one Skill at a time:
+
+```bash
+node src/cli.js doctor \
+  claude="$HOME/.claude/skills" \
+  codex="$HOME/.agents/skills" \
+  --format text
+```
+
+The scan checks immediate, non-hidden directories and directory symlinks in each selected root. It reports whether each entry has a readable `SKILL.md`, including broken links; it does not follow nested Skills or inspect their referenced files. JSON output includes the selected absolute roots, which may reveal local usernames or directory names, so review it before sharing. More than 2,000 entries in a root is marked as truncated and exits with code 2. Exit code 0 means all scanned entries were found, 1 means a selected root or entry is missing or broken, and 2 means a root could not be inspected, the scan was truncated, or input was invalid. This is a filesystem snapshot, not an agent-runtime check or repair command.
 
 From v0.4.0, Codex global checks look in both `~/.agents/skills` and `$CODEX_HOME/skills` (default `~/.codex/skills`) and report every matching root. Set `CODEX_HOME` for the process, or use `--codex-home /path/to/codex-home`; when using `--home` for a fixture, the default Codex home is `.codex` under that home. An isolated native Codex app-server `skills/list` test found separate synthetic Skills in both user roots. File presence alone still does not prove that your running agent loaded a particular Skill; versions and configuration may differ.
 

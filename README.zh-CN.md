@@ -16,7 +16,9 @@ Skill 包含在插件中？[检查外层插件文件](#plugin-tree)。
 
 准备安装同名 Skill？先[检查目标路径](#安装前检查目标路径)。
 
-Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个 Skill 文件夹，`diff-tree` 对比更大的指定目录，包含 Skill 外层的插件文件。`review-pipes` 提示人工检查部分 Markdown 表格转义；`review-shell` 提示复核部分 Shell 示例中的脚本路径。
+Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`doctor` 批量扫描指定根目录下的 Skill 入口，查找缺失或断开的 `SKILL.md` 路径。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个 Skill 文件夹，`diff-tree` 对比更大的指定目录，包含 Skill 外层的插件文件。`review-pipes` 提示人工检查部分 Markdown 表格转义；`review-shell` 提示复核部分 Shell 示例中的脚本路径。
+
+`doctor` 目前仅在仓库源码中提供，不包含在 [v0.14.4 发行版](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.14.4) 中。
 
 它不会运行 Skill、启动 Agent，也不会声称 Agent 已在运行时加载了 Skill。
 
@@ -31,6 +33,7 @@ Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地�
 - [OpenAI Codex #8364](https://github.com/openai/codex/issues/8364) 报告 Agent 有时找不到引用的脚本，维护者将其关联到另一条问题；该报告没有证明安装目录中的脚本本身缺失。
 - [CLI-Anything #331](https://github.com/HKUDS/CLI-Anything/issues/331) 报告安装器只复制 Skill 目录，没有复制它引用的方法文档。
 - [Vercel Skills #1851](https://github.com/vercel-labs/skills/issues/1851) 报告全局安装显示成功，但 Skill 被写入共享目录，没有进入 Antigravity CLI 文档所列的全局目录。
+- [Vercel Skills #456](https://github.com/vercel-labs/skills/issues/456) 描述了安装目录本身是符号链接时，Skill 的相对链接可能失效。一条报告称一次全局安装后有 58 个链接失效。`doctor` 可以在指定目录中找出断开的 Skill 目录链接和缺失的 `SKILL.md`；它不会修复链接，也无法判断 Agent 是否加载了 Skill。
 
 格式校验本身未必能发现这类问题。[一份复现记录](https://tinkerhood.com/learn/skill-references-and-assets/) 显示，格式校验通过时，Skill 引用的文件仍可能缺失。本工具直接检查源目录和实际安装目录。
 
@@ -102,6 +105,19 @@ node src/cli.js check-agent --root ./custom-agent/skills --skill my-skill --scop
 目前内置了 `claude-code`、`codex-cli`、`antigravity-cli`、`antigravity-ide` 和 `antigravity-app` 路径，映射依据分别链接到 [Claude Code Skills 文档](https://code.claude.com/docs/en/skills)、[Codex Skills 文档](https://developers.openai.com/codex/skills/) 和 [Antigravity Skills 文档](https://www.antigravity.google/docs/skills)。项目级检查以当前工作目录代表的项目目录为准。目标目录缺少 Skill 时返回退出码 1；如果 Skill 只在 `~/.agents/skills`，报告会同时显示预期路径与实际找到的路径。Antigravity IDE 文档支持的旧路径也会识别。检查文件落点不等于确认 Agent 已在运行时加载或执行 Skill。
 
 如果预期路径中有失效的符号链接，`check-agent` 也会指出它的位置。[一个 Codex 问题](https://github.com/openai/codex/issues/11314)最终确认是相对链接指向错误；本检查只诊断路径，不证明 Agent 已加载。 从 v0.14.4 起，当目标路径存在且经过软链接时，工具会列出所选路径上的链接位置；这有助于排查发现问题，但不能证明 Agent 已加载。
+
+## 批量检查已安装 Skill 的路径
+
+想一次检查多个 Skill 时，使用 `doctor`，无需逐个输入 Skill 名称：
+
+```bash
+node src/cli.js doctor \
+  claude="$HOME/.claude/skills" \
+  codex="$HOME/.agents/skills" \
+  --format text
+```
+
+它只扫描指定根目录下第一层、非隐藏的文件夹和目录符号链接，并检查每个入口是否有可读取的 `SKILL.md`，包括断开的链接；不会扫描更深层目录，也不会检查 Skill 引用的其他文件。JSON 会包含所选根目录的绝对路径，可能暴露本机用户名或目录名，分享前请检查。某个根目录超过 2,000 个入口时会标记截断并以退出码 2 结束。退出码 0 表示扫描到的入口均存在，1 表示所选根目录或入口缺失、断链，2 表示根目录无法检查、扫描已截断或输入无效。这只是某一时刻的文件系统检查，不会检查 Agent 运行时，也不会修复路径。
 
 从 v0.4.0 起，Codex 全局检查同时查看 `~/.agents/skills` 和 `$CODEX_HOME/skills`（默认 `~/.codex/skills`），并列出找到的目录。可设置进程的 `CODEX_HOME`，也可用 `--codex-home /路径/到/codex-home` 指定；使用 `--home` 检查隔离样例时，默认 Codex 目录是该 home 下的 `.codex`。隔离环境中的原生 Codex app-server `skills/list` 测试在两个用户目录各发现了一个合成 Skill。文件存在仍不证明你正在使用的 Agent 已加载该 Skill；不同版本或配置可能不同。
 

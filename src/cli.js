@@ -8,6 +8,7 @@ import { checkAgentPath, getAgentProfiles } from './agent-path.js';
 import { checkBundle } from './check.js';
 import { reviewShell } from './review-shell.js';
 import { inspectInstallTarget } from './install-target.js';
+import { scanSkillRoots, doctorExitCode } from './doctor.js';
 
 const HELP = `skill-bundle-check — verify links survive a real skill install
 
@@ -16,6 +17,7 @@ Usage:
   skill-bundle-check check-agent --skill <name> --scope global|project (--agent <id> | --root <path>) [options]
   skill-bundle-check check-target <destination-path> [--format text|json]
   skill-bundle-check snapshot <skill> <label=skills-root> [label=skills-root ...]
+  skill-bundle-check doctor <label=skills-root> [label=skills-root ...] [--format text|json]
   skill-bundle-check compare <before.json> <after.json>
   skill-bundle-check diff <source-skill-dir> <installed-skill-dir> [--format text|json]
   skill-bundle-check diff-tree <source-dir> <installed-dir> [--format text|json]
@@ -50,6 +52,7 @@ async function main(argv) {
 	if (command === 'check-agent') return await runAgentCheck(args);
 	if (command === 'check-target') return await runTargetCheck(args);
 	if (command === 'snapshot') return await runPresenceSnapshot(args);
+	if (command === 'doctor') return await runDoctor(args);
 	if (command === 'compare') return await runPresenceCompare(args);
 	if (command === 'diff' || command === 'diff-tree') {
 		if (![2,4].includes(args.length) || (args.length === 4 && (args[2] !== '--format' || !['text','json'].includes(args[3])))) throw new Error(`Use ${command} <source-dir> <installed-dir> [--format text|json]`);
@@ -121,6 +124,39 @@ async function runPresenceSnapshot(args) {
   const result = await snapshot(skill, targets);
   console.log(JSON.stringify(result, null, 2));
   return result.targets.some(t => t.status === 'unavailable') ? 2 : result.targets.some(t => t.status !== 'found') ? 1 : 0;
+}
+
+async function runDoctor(args) {
+  const formatIndex = args.indexOf('--format');
+  let format = 'text';
+  let specs = args;
+  if (formatIndex >= 0) {
+    if (formatIndex !== args.length - 2 || !['text', 'json'].includes(args[formatIndex + 1])) {
+      throw new Error('Use doctor <label=skills-root> [label=skills-root ...] [--format text|json]');
+    }
+    format = args[formatIndex + 1];
+    specs = args.slice(0, formatIndex);
+  }
+  const targets = specs.map(spec => {
+    const separator = spec.indexOf('=');
+    if (separator < 1 || !spec.slice(separator + 1).trim()) throw new Error('Use label=/skills/root');
+    return { name: spec.slice(0, separator), root: spec.slice(separator + 1) };
+  });
+  const report = await scanSkillRoots(targets);
+  if (format === 'json') {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    for (const root of report.roots) {
+      console.log(`${root.name}: ${root.status}${root.skills ? ` — ${root.skills.length} Skill folder(s)` : ''}${root.truncated ? ' — truncated' : ''}`);
+      for (const skill of root.skills || []) {
+        if (skill.status !== 'found') console.log(`  ${skill.status.toUpperCase()}  ${JSON.stringify(skill.name)}${skill.at ? `  ${JSON.stringify(skill.at)}` : ''}`);
+      }
+    }
+    const checked = report.roots.reduce((sum, root) => sum + (root.skills?.length || 0), 0);
+    const problems = report.roots.reduce((sum, root) => sum + (root.skills?.filter(skill => skill.status !== 'found').length || 0), 0);
+    console.log(`\n${checked} Skill folder(s) scanned; ${problems} path issue(s)${report.roots.some(root => root.truncated) ? '; scan truncated' : ''}. No Skill code was run.`);
+  }
+  return doctorExitCode(report);
 }
 
 async function readSnapshot(file) {
