@@ -2,7 +2,7 @@
 
 **仓库里能用，装进 Agent 之后还好吗？**
 
-[在线对比 Skill 文件夹](https://lydiatools.github.io/skill-bundle-check/web/diff.html?lang=zh) · [检查 Markdown 表格](https://lydiatools.github.io/skill-bundle-check/web/?lang=zh) · [English](README.md)
+[在线对比 Skill 文件夹](https://lydiatools.github.io/skill-bundle-check/web/diff.html?lang=zh) · [检查 Markdown 表格](https://lydiatools.github.io/skill-bundle-check/web/?lang=zh) · [下载 v0.15.0](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.15.0) · [English](README.md)
 
 Skill 包含在插件中？[检查外层插件文件](#plugin-tree)。
 
@@ -16,9 +16,9 @@ Skill 包含在插件中？[检查外层插件文件](#plugin-tree)。
 
 准备安装同名 Skill？先[检查目标路径](#安装前检查目标路径)。
 
-Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 的官方安装目录里有没有对应的 `SKILL.md`，并报告它是否只出现在另一个共享目录。`doctor` 批量扫描指定根目录下的 Skill 入口，查找缺失或断开的 `SKILL.md` 路径。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个 Skill 文件夹，`diff-tree` 对比更大的指定目录，包含 Skill 外层的插件文件。`review-pipes` 提示人工检查部分 Markdown 表格转义；`review-shell` 提示复核部分 Shell 示例中的脚本路径。
+Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地文件，在安装器或发行流程生成的目录中是否存在且能够解析；它不逐字节比较文件内容，也不证明安装包完整性。`check-agent` 检查目标 Agent 文档中的安装目录是否有 `SKILL.md`；`--agent all` 可一次检查所有内置路径，并显示在其他已知目录中找到的副本。`doctor` 批量扫描指定根目录下的 Skill 入口，查找缺失或断开的 `SKILL.md` 路径。`snapshot` 和 `compare` 对比指定安装目录中的文件存在状态。`diff` 对比两个 Skill 文件夹，`diff-tree` 对比更大的指定目录，包含 Skill 外层的插件文件。`review-pipes` 提示人工检查部分 Markdown 表格转义；`review-shell` 提示复核部分 Shell 示例中的脚本路径。
 
-`doctor` 目前仅在仓库源码中提供，不包含在 [v0.14.4 发行版](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.14.4) 中。
+当前 CLI 命令（包括 `doctor` 和多 Agent 路径定位）包含在 [v0.15.0 发行版](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.15.0) 中。
 
 它不会运行 Skill、启动 Agent，也不会声称 Agent 已在运行时加载了 Skill。
 
@@ -33,11 +33,12 @@ Skill Bundle Check 提供只读检查。`check` 核对源 Skill 引用的本地�
 - [OpenAI Codex #8364](https://github.com/openai/codex/issues/8364) 报告 Agent 有时找不到引用的脚本，维护者将其关联到另一条问题；该报告没有证明安装目录中的脚本本身缺失。
 - [CLI-Anything #331](https://github.com/HKUDS/CLI-Anything/issues/331) 报告安装器只复制 Skill 目录，没有复制它引用的方法文档。
 - [Vercel Skills #1851](https://github.com/vercel-labs/skills/issues/1851) 报告全局安装显示成功，但 Skill 被写入共享目录，没有进入 Antigravity CLI 文档所列的全局目录。
+- [Vercel Skills #537](https://github.com/vercel-labs/skills/issues/537) 报告全局安装后 Agent 专属目录没有建立链接；一次性多路径报告可显示各文档目录是否有该 Skill。
 - [Vercel Skills #456](https://github.com/vercel-labs/skills/issues/456) 描述了安装目录本身是符号链接时，Skill 的相对链接可能失效。一条报告称一次全局安装后有 58 个链接失效。`doctor` 可以在指定目录中找出断开的 Skill 目录链接和缺失的 `SKILL.md`；它不会修复链接，也无法判断 Agent 是否加载了 Skill。
 
 格式校验本身未必能发现这类问题。[一份复现记录](https://tinkerhood.com/learn/skill-references-and-assets/) 显示，格式校验通过时，Skill 引用的文件仍可能缺失。本工具直接检查源目录和实际安装目录。
 
-还有一类相关问题不在本工具的检查范围内：[Microsoft APM #2966](https://github.com/microsoft/apm/issues/2966) 报告资源**已经安装**，但生成的 Codex Agent TOML 文件保留了相对于旧位置的链接。`check` 读取 Skill 文件夹中的 Markdown，不检查生成的 Agent TOML，也不证明 Agent 运行时如何解析链接。
+还有一类相关问题不在本工具的检查范围内：[Codex #28505](https://github.com/openai/codex/issues/28505) 报告有效的个人 Skill 已在磁盘上，却没有出现在桌面端选择器中。路径报告能帮助缩小落点问题，但不能诊断或修复运行时索引。[Microsoft APM #2966](https://github.com/microsoft/apm/issues/2966) 则报告资源**已经安装**，但生成的 Codex Agent TOML 文件保留了相对于旧位置的链接。`check` 读取 Skill 文件夹中的 Markdown，不检查生成的 Agent TOML，也不证明 Agent 运行时如何解析链接。
 
 结构检查与安全扫描仍然有用。这个工具只补一个检查环节：对比你准备发布的源 Skill 和用户实际安装到的目录。
 
@@ -87,6 +88,14 @@ node src/cli.js check-agent --agent antigravity-cli --skill my-skill --scope glo
 node src/cli.js check-agent --agent antigravity-ide --skill my-skill --scope global
 ```
 
+想一次查看所有内置 Agent 的全局路径：
+
+```bash
+node src/cli.js check-agent --agent all --skill my-skill --scope global
+```
+
+检查项目目录时使用 `--scope project --cwd /项目路径`。报告只检查文件落点，不会查询运行中的 Agent，也不能证明 Skill 已加载。此定位命令完成扫描时返回退出码 `0`，即使部分路径缺失；路径无法读取时返回 `2`。JSON 会包含绝对路径，分享前请检查，因为其中可能有本机用户名或目录名。多个 Agent 配置可能指向同一目录。
+
 检查仓库里的项目级 Skill 时，把 `--scope` 设为 `project`：
 
 ```bash
@@ -102,7 +111,7 @@ node src/cli.js check-agent --agent codex-cli --skill my-skill --scope project
 node src/cli.js check-agent --root ./custom-agent/skills --skill my-skill --scope global
 ```
 
-目前内置了 `claude-code`、`codex-cli`、`antigravity-cli`、`antigravity-ide` 和 `antigravity-app` 路径，映射依据分别链接到 [Claude Code Skills 文档](https://code.claude.com/docs/en/skills)、[Codex Skills 文档](https://developers.openai.com/codex/skills/) 和 [Antigravity Skills 文档](https://www.antigravity.google/docs/skills)。项目级检查以当前工作目录代表的项目目录为准。目标目录缺少 Skill 时返回退出码 1；如果 Skill 只在 `~/.agents/skills`，报告会同时显示预期路径与实际找到的路径。Antigravity IDE 文档支持的旧路径也会识别。检查文件落点不等于确认 Agent 已在运行时加载或执行 Skill。
+目前内置了 `claude-code`、`codex-cli`、`antigravity-cli`、`antigravity-ide` 和 `antigravity-app` 路径，映射依据分别链接到 [Claude Code Skills 文档](https://code.claude.com/docs/en/skills)、[Codex Skills 文档](https://developers.openai.com/codex/skills/) 和 [Antigravity Skills 文档](https://www.antigravity.google/docs/skills)。项目级检查以当前工作目录代表的项目目录为准。单个 Agent 的目标目录缺少 Skill 时返回退出码 1；如果 Skill 只在 `~/.agents/skills`，报告会同时显示预期路径与实际找到的路径。Antigravity IDE 文档支持的旧路径也会识别。检查文件落点不等于确认 Agent 已在运行时加载或执行 Skill。
 
 如果预期路径中有失效的符号链接，`check-agent` 也会指出它的位置。[一个 Codex 问题](https://github.com/openai/codex/issues/11314)最终确认是相对链接指向错误；本检查只诊断路径，不证明 Agent 已加载。 从 v0.14.4 起，当目标路径存在且经过软链接时，工具会列出所选路径上的链接位置；这有助于排查发现问题，但不能证明 Agent 已加载。
 
@@ -147,7 +156,7 @@ node src/cli.js check-target "$HOME/.claude/skills/unslop"
 
 如果唯一的 `SKILL.md` 直接位于 ZIP 根目录，检查页面会向 Claude 网页版和桌面版用户提示顶层文件夹的要求。该提示不检查其余目录结构，也不验证上传结果；v0.14.2 已包含，固定的 v0.14.1 下载包不包含。
 
-使用[下载的 v0.14.4 ZIP](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.14.4) 时，解压后在该目录打开终端，运行 `python3 -m http.server 8000 --bind 127.0.0.1`（Windows 可用 `py -3` 替代 `python3`），然后在浏览器打开 `http://127.0.0.1:8000/web/zip.html`。使用 Ctrl+C 停止本地服务。页面在浏览器中读取选中的 ZIP，不会将其发送给服务端。
+使用[下载的 v0.15.0 ZIP](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.15.0) 时，解压后在该目录打开终端，运行 `python3 -m http.server 8000 --bind 127.0.0.1`（Windows 可用 `py -3` 替代 `python3`），然后在浏览器打开 `http://127.0.0.1:8000/web/zip.html`。使用 Ctrl+C 停止本地服务。页面在浏览器中读取选中的 ZIP，不会将其发送给服务端。
 
 上传 ZIP 失败时，可先[在浏览器选择文件](https://lydiatools.github.io/skill-bundle-check/web/zip.html?lang=zh)。文件留在当前标签页，只读取 ZIP 目录信息。网页版支持 UTF-8 和 ASCII 文件名，暂不支持旧式非 ASCII 编码和 Unicode Path 扩展字段。
 

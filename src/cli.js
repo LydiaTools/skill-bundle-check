@@ -14,7 +14,7 @@ const HELP = `skill-bundle-check — verify links survive a real skill install
 
 Usage:
   skill-bundle-check check <source-skill-dir> <installed-skill-dir> [--format text|json]
-  skill-bundle-check check-agent --skill <name> --scope global|project (--agent <id> | --root <path>) [options]
+  skill-bundle-check check-agent --skill <name> --scope global|project (--agent <id|all> | --root <path>) [options]
   skill-bundle-check check-target <destination-path> [--format text|json]
   skill-bundle-check snapshot <skill> <label=skills-root> [label=skills-root ...]
   skill-bundle-check doctor <label=skills-root> [label=skills-root ...] [--format text|json]
@@ -27,11 +27,12 @@ Usage:
 Example:
   skill-bundle-check check ./skills/my-skill ~/.agents/skills/my-skill
   skill-bundle-check check-agent --agent antigravity-cli --skill my-skill --scope global
+  skill-bundle-check check-agent --agent all --skill my-skill --scope global
   skill-bundle-check check-agent --root ./custom-agent/skills --skill my-skill --scope global
 
-check reads both bundle directories. check-agent looks for SKILL.md at the documented location.
+check reads both bundle directories. check-agent checks one documented location; --agent all prints every built-in profile.
 check-target observes one explicit destination path; it does not reserve it or decide whether an installer will overwrite files.
-All checks are read-only; none runs nor installs a skill.
+All checks are read-only; none runs nor installs a skill. Agent path checks do not verify runtime discovery.
 review-pipes offers non-blocking review hints for escaped pipes in inline code within ordinary Markdown tables.
 review-shell offers non-blocking hints for selected ./scripts/ commands in source SKILL.md shell fences.
 Snapshot and compare output JSON with paths; exit 0 if all targets are found, 1 for a missing/broken target, 2 for unavailable input.
@@ -218,6 +219,7 @@ async function runAgentCheck(argv) {
 	if (options.format && !['text', 'json'].includes(options.format)) {
 		throw new Error(`Unknown output format: ${options.format}`);
 	}
+	if (options.agent === 'all') return await runAllAgentCheck(options);
 	const result = await checkAgentPath(options);
 	if (options.format === 'json') {
 		console.log(JSON.stringify(result, null, 2));
@@ -225,6 +227,58 @@ async function runAgentCheck(argv) {
 		printAgentResult(result);
 	}
 	return result.expectedPresent || ['found-legacy', 'found-codex-home'].includes(result.status) ? 0 : 1;
+}
+
+async function runAllAgentCheck(options) {
+	if (options.root) throw new Error('`--agent all` cannot be combined with `--root`.');
+	if (options.codexHome && options.scope !== 'global') {
+		throw new Error('`--codex-home` applies only to the global scope.');
+	}
+	const profiles = getAgentProfiles();
+	const filesystemCodes = new Set(['EACCES', 'EIO', 'ELOOP', 'EMFILE', 'ENFILE', 'ENOTDIR', 'ENOENT', 'EPERM']);
+	const results = await Promise.all(Object.entries(profiles).map(async ([agent, label]) => {
+		const profileOptions = { ...options, agent };
+		if (agent !== 'codex-cli') delete profileOptions.codexHome;
+		try {
+			return await checkAgentPath(profileOptions);
+		} catch (error) {
+			if (!filesystemCodes.has(error?.code)) throw error;
+			return { agent, label, scope: options.scope, skill: options.skill, status: 'unavailable', error: error.code };
+		}
+	}));
+	const found = results.filter(result => result.expectedPresent).length;
+	const alternateLocations = results.reduce((count, result) => count + result.otherLocations.length, 0);
+	const unavailable = results.filter(result => result.status === 'unavailable').length;
+	const report = {
+		schema: 'skill-agent-location-matrix-v1',
+		skill: options.skill,
+		scope: options.scope,
+		status: found === results.length ? 'expected-all' : found ? 'expected-some' : 'expected-none',
+		runtimeDiscovery: 'not-checked',
+		expectedFound: found,
+		profileCount: results.length,
+		alternateLocations,
+		unavailable,
+		results,
+	};
+	if (options.format === 'json') {
+		console.log(JSON.stringify(report, null, 2));
+	} else {
+		console.log(`Skill: ${report.skill} · scope: ${report.scope}`);
+		for (const result of results) {
+			if (result.status === 'unavailable') {
+				console.log(`UNAVAILABLE  ${result.label} (${result.error})`);
+				continue;
+			}
+			console.log(`${result.expectedPresent ? 'FOUND' : 'NOT FOUND'}  ${result.label}  ${result.expectedEntry}`);
+			if (result.brokenLink) console.log(`  BROKEN LINK  ${result.brokenLink}`);
+			for (const location of result.otherLocations) {
+				console.log(`  ALSO FOUND (${location.kind})  ${location.entry}`);
+			}
+		}
+		console.log(`\nExpected paths found: ${found}/${results.length}; additional matches in other known roots: ${alternateLocations}. Runtime discovery is not checked.`);
+	}
+	return unavailable ? 2 : 0;
 }
 
 function parseOptions(argv, allowed) {

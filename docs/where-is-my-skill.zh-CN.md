@@ -4,6 +4,14 @@
 
 [English](where-is-my-skill.md) · [在线对比文件夹](https://lydiatools.github.io/skill-bundle-check/web/diff.html?lang=zh)
 
+如果不知道 Skill 落在哪个 Agent 目录，可一次只读检查所有内置路径（需要 Node.js 20+）：
+
+```sh
+node src/cli.js check-agent --agent all --skill my-skill --scope global
+```
+
+检查项目级路径时加上 `--scope project --cwd /项目路径`。报告只定位文件，不显示运行中的 Agent 是否加载或使用了它。该定位命令不会因为某些路径缺失而报错。JSON 输出包含本机绝对路径。
+
 ## 1. 找出安装器能看到的副本
 
 如果你用第三方 `skills` CLI 安装，请在安装时使用的项目目录打开终端：

@@ -2,7 +2,7 @@
 
 **Your skill works in the repo. Does it still work after installation?**
 
-[Compare Skill folders online](https://lydiatools.github.io/skill-bundle-check/web/diff.html) · [Review Markdown tables](https://lydiatools.github.io/skill-bundle-check/web/) · [Download v0.14.4](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.14.4) · [中文说明](README.zh-CN.md)
+[Compare Skill folders online](https://lydiatools.github.io/skill-bundle-check/web/diff.html) · [Review Markdown tables](https://lydiatools.github.io/skill-bundle-check/web/) · [Download v0.15.0](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.15.0) · [中文说明](README.zh-CN.md)
 
 Using a Skill inside a plugin? [Check the surrounding plugin files](#plugin-tree).
 
@@ -16,9 +16,9 @@ Uploading one Skill as a ZIP? [Review its structure in your browser](https://lyd
 
 Installing a same-name Skill? [Check the destination first](#check-a-destination-before-installing).
 
-Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory and reports when the file exists only in a different shared root. `doctor` scans the immediate Skill entries in one or more selected roots for missing or broken `SKILL.md` paths. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares two Skill folders; `diff-tree` compares larger selected directory trees, including plugin files outside a Skill folder. `review-pipes` points out certain Markdown table escapes; `review-shell` highlights selected script paths in shell examples. Both provide hints for human review.
+Skill Bundle Check provides read-only checks. `check` verifies that local references from a source Agent Skill are present and resolve in the folder produced by your installer or release build. It does not compare file contents or attest package integrity. `check-agent` looks for `SKILL.md` in a supported agent's documented install directory; `--agent all` checks every built-in profile in one pass and shows copies found at other known roots. `doctor` scans the immediate Skill entries in one or more selected roots for missing or broken `SKILL.md` paths. `snapshot` and `compare` show presence changes across explicitly selected installation roots. `diff` compares two Skill folders; `diff-tree` compares larger selected directory trees, including plugin files outside a Skill folder. `review-pipes` points out certain Markdown table escapes; `review-shell` highlights selected script paths in shell examples. Both provide hints for human review.
 
-`doctor` is currently available from the repository source; it is not included in the [v0.14.4 release](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.14.4).
+The [v0.15.0 release](https://github.com/LydiaTools/skill-bundle-check/releases/tag/v0.15.0) includes the current CLI commands, including `doctor` and the all-agent location report.
 
 It does not run the skill, start the agent, or claim that the agent loaded it at runtime.
 
@@ -31,11 +31,12 @@ People have reported Agent Skills whose `SKILL.md` points to files that are miss
 - [OpenAI Codex #8364](https://github.com/openai/codex/issues/8364) reports an agent sometimes failing to find a referenced script; the maintainer linked it to a separate issue. The report does not establish that the installed script itself was missing.
 - [CLI-Anything #331](https://github.com/HKUDS/CLI-Anything/issues/331) reports an installer that copies the skill but leaves its referenced methodology files behind.
 - [Vercel Skills #1851](https://github.com/vercel-labs/skills/issues/1851) reports a successful global install that places a Skill in a shared directory instead of Antigravity CLI's documented global directory.
+- [Vercel Skills #537](https://github.com/vercel-labs/skills/issues/537) reports a global install that leaves an agent-specific directory unlinked; a one-pass profile report can show which documented paths contain the Skill.
 - [Vercel Skills #456](https://github.com/vercel-labs/skills/issues/456) describes relative Skill links that can break when an installed `skills` directory is itself a symlink. One report describes 58 broken links after a global install. `doctor` can surface broken Skill-directory links and missing `SKILL.md` paths in selected roots; it does not repair them or determine whether an agent loaded the Skill.
 
 Format validation alone may not catch these failures. A [reproduction report](https://tinkerhood.com/learn/skill-references-and-assets/) shows a skill-reference check passing while the referenced file is missing. This tool checks the actual source and installed folders instead. See also a [real generated-guide link case](docs/case-generated-rule-links.md).
 
-Related but outside this check: [Microsoft APM #2966](https://github.com/microsoft/apm/issues/2966) reports a resource that **was installed**, while a generated Codex agent TOML file retained a link relative to its old location. `check` reads Markdown in Skill folders; it does not inspect generated agent TOML or prove how an agent resolves it.
+Related but outside this check: [Codex #28505](https://github.com/openai/codex/issues/28505) reports a valid personal Skill on disk that does not appear in the desktop picker. A path report can narrow down placement, but cannot diagnose or repair runtime indexing. [Microsoft APM #2966](https://github.com/microsoft/apm/issues/2966) reports a resource that **was installed**, while a generated Codex agent TOML file retained a link relative to its old location. `check` reads Markdown in Skill folders; it does not inspect generated agent TOML or prove how an agent resolves it.
 
 Existing structure and security checks are useful before publishing. This tool adds one narrow check: compare the skill folder you intend to ship with the copy users will actually install.
 
@@ -85,6 +86,14 @@ node src/cli.js check-agent --agent antigravity-cli --skill my-skill --scope glo
 node src/cli.js check-agent --agent antigravity-ide --skill my-skill --scope global
 ```
 
+To see the documented global location for every built-in profile at once:
+
+```bash
+node src/cli.js check-agent --agent all --skill my-skill --scope global
+```
+
+Use `--scope project` and `--cwd /path/to/project` for a project directory. The report checks file placement only; it does not query a running agent or prove that a Skill was loaded. Missing paths are normal findings in this locate report, so the command exits `0` when the scan completes and `2` if a path cannot be inspected. JSON includes absolute paths; review them before sharing because they can contain local usernames or directory names. Two profiles may refer to the same physical root.
+
 For a repository-local Skill, use `--scope project`:
 
 ```bash
@@ -100,7 +109,7 @@ For another agent, pass its documented Skills root directly:
 node src/cli.js check-agent --root ./custom-agent/skills --skill my-skill --scope global
 ```
 
-Built-in profiles cover `claude-code`, `codex-cli`, `antigravity-cli`, `antigravity-ide`, and `antigravity-app`. Profile paths link to the platform documentation used for the mapping: [Claude Code Skills](https://code.claude.com/docs/en/skills), [Codex Skills](https://developers.openai.com/codex/skills/), and [Antigravity Skills](https://www.antigravity.google/docs/skills). Project scope checks the project directory represented by the current working directory. A missing Skill returns exit code 1. If the Skill is found in `~/.agents/skills` but not in the selected global root, the report shows both paths. A documented legacy Antigravity IDE path is also recognized. This checks file placement; it does not confirm runtime discovery or execution.
+Built-in profiles cover `claude-code`, `codex-cli`, `antigravity-cli`, `antigravity-ide`, and `antigravity-app`. Profile paths link to the platform documentation used for the mapping: [Claude Code Skills](https://code.claude.com/docs/en/skills), [Codex Skills](https://developers.openai.com/codex/skills/), and [Antigravity Skills](https://www.antigravity.google/docs/skills). Project scope checks the project directory represented by the current working directory. A single-profile check returns exit code 1 when its expected path is missing. If the Skill is found in `~/.agents/skills` but not in the selected global root, the report shows both paths. A documented legacy Antigravity IDE path is also recognized. This checks file placement; it does not confirm runtime discovery or execution.
 
 From v0.14.4, when the expected `SKILL.md` exists through symbolic links, `check-agent` lists the link paths on the selected route. This helps diagnose discovery problems without asserting whether the agent follows them. [Claude Code issue #14836](https://github.com/anthropics/claude-code/issues/14836) contains version-specific reports. If an expected path contains a broken symbolic link, `check-agent` also shows the broken link. A [Codex report](https://github.com/openai/codex/issues/11314) was traced to a relative link pointing at the wrong location; this check diagnoses file paths, not agent loading.
 

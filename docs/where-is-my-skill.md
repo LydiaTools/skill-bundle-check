@@ -4,6 +4,14 @@ You installed a Skill, changed its source, and your agent still seems to use the
 
 [中文](where-is-my-skill.zh-CN.md) · [Try folder comparison](https://lydiatools.github.io/skill-bundle-check/web/diff.html)
 
+If you do not know which documented agent folder contains the Skill, check all built-in paths in one read-only pass (Node.js 20+):
+
+```sh
+node src/cli.js check-agent --agent all --skill my-skill --scope global
+```
+
+Use `--scope project --cwd /path/to/project` for project paths. The report locates files; it does not show whether a running agent loaded or used them. Missing paths do not make this locate command fail. JSON output includes local absolute paths.
+
 ## 1. List the copies the installer can see
 
 If you installed with the third-party `skills` CLI, open a terminal in the project where you installed it:

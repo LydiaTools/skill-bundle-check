@@ -137,10 +137,20 @@ async function findPathLinks(start, entry) {
 	if (relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) return [];
 	let current = start;
 	const links = [];
-	if ((await lstat(current)).isSymbolicLink()) links.push(current);
+	if (!(await addLinkIfPresent(current, links))) return links;
 	for (const part of relative.split(path.sep).filter(Boolean)) {
 		current = path.join(current, part);
-		if ((await lstat(current)).isSymbolicLink()) links.push(current);
+		if (!(await addLinkIfPresent(current, links))) break;
 	}
 	return links;
+}
+
+async function addLinkIfPresent(filePath, links) {
+	try {
+		if ((await lstat(filePath)).isSymbolicLink()) links.push(filePath);
+		return true;
+	} catch (error) {
+		if (error?.code === 'ENOENT' || error?.code === 'ENOTDIR') return false;
+		throw error;
+	}
 }
